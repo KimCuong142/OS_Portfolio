@@ -46,7 +46,7 @@ const XPStartMenu = ({ isOpen, onClose }) => {
       <div className="h-[54px] px-3 flex items-center gap-3 bg-gradient-to-b from-[#1852d6] via-[#2268f5] to-[#154fc9] border-b border-[#0038a8] shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]">
         <div className="relative w-10 h-10 rounded-[3px] border-2 border-white shadow-md overflow-hidden bg-white flex-shrink-0">
           <img
-            src="/images/me.jpg"
+            src="/images/kcuong.JPG"
             alt="Avatar"
             className="w-full h-full object-cover"
           />

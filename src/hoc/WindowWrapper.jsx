@@ -22,10 +22,16 @@ const WindowWrapper = (Component, windowkey) => {
       const el = ref.current;
       if (!el) return;
 
+      const isMobile = window.innerWidth < 640;
+      if (isMobile) {
+        gsap.set(el, { x: 0 });
+      }
+
       const [instance] = Draggable.create(el, {
         onPress: () => focusWindow(windowkey),
         edgeResistance: 0.7,
         type: "x,y",
+        bounds: "main",
       });
       draggableInstanceRef.current = instance;
 
@@ -52,6 +58,9 @@ const WindowWrapper = (Component, windowkey) => {
 
       if (isOpen && !prevOpenRef.current && !isMinimized) {
         el.style.display = "flex";
+        if (window.innerWidth < 640) {
+          gsap.set(el, { x: 0 });
+        }
         gsap.fromTo(
           el,
           { scale: 0.85, opacity: 0, y: 30 },

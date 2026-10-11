@@ -259,7 +259,7 @@ const Dock = () => {
           <div
             ref={glassBoxRef}
             data-dynamic
-            className="dock-liquid-glass absolute inset-0 rounded-[40px] pointer-events-none"
+            className="dock-liquid-glass absolute inset-0 rounded-[24px] sm:rounded-[40px] pointer-events-none"
             data-config={JSON.stringify({
               blurAmount: 0,
               refraction: 0.75,
@@ -287,7 +287,7 @@ const Dock = () => {
             is2077
               ? "cyber-dock-container"
               : is2026
-              ? "!border-none !bg-transparent !shadow-none !rounded-[40px]"
+              ? "!border-none !bg-transparent !shadow-none !rounded-[24px] sm:!rounded-[40px]"
               : "!bg-white/10 !backdrop-blur-sm !border !border-white/40 shadow-lg shadow-black/5"
           )}
         >
@@ -296,7 +296,7 @@ const Dock = () => {
             return (
               <div
                 key={id}
-                className="relative flex flex-col items-center justify-center px-1"
+                className="relative flex flex-col items-center justify-center px-0.5 sm:px-1"
               >
                 <button
                   type="button"

@@ -114,19 +114,15 @@ const Welcome = () => {
       <p ref={subtitleRef} className="pointer-events-auto cursor-default">
         {renderText(
           "Hey, I'm Kim Cuong! Welcome to my",
-          "text-xl sm:text-3xl font-orbitron tracking-widest text-[#00f0ff]/90 drop-shadow-[0_0_10px_rgba(0,240,255,0.6)]"
+          "text-xs sm:text-2xl md:text-3xl font-orbitron tracking-wider sm:tracking-widest text-[#00f0ff]/90 drop-shadow-[0_0_10px_rgba(0,240,255,0.6)] px-2"
         )}
       </p>
-      <h1 ref={titleRef} className="mt-2 sm:mt-4 pointer-events-auto cursor-default">
+      <h1 ref={titleRef} className="mt-1 sm:mt-4 pointer-events-auto cursor-default">
         {renderText(
           "portfolio",
-          "text-6xl sm:text-9xl italic font-georama text-[#00f0ff] cyan-glow drop-shadow-[0_0_24px_rgba(0,240,255,0.8)]"
+          "text-5xl sm:text-7xl md:text-9xl italic font-georama text-[#00f0ff] cyan-glow drop-shadow-[0_0_24px_rgba(0,240,255,0.8)]"
         )}
       </h1>
-
-      <div className="small-screen pointer-events-auto">
-        <p>This Portfolio is designed for desktop/tablet screens only.</p>
-      </div>
     </section>
   );
 };

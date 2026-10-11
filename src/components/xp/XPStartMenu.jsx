@@ -37,7 +37,7 @@ const XPStartMenu = ({ isOpen, onClose }) => {
     <div
       ref={menuRef}
       id="xp-start-menu"
-      className="fixed bottom-[30px] left-0 w-[380px] rounded-t-[6px] overflow-hidden border border-[#002275] shadow-[4px_-4px_24px_rgba(0,0,0,0.55)] z-[10000] font-['Tahoma',sans-serif] text-[11px] select-none flex flex-col"
+      className="fixed bottom-[30px] left-0 w-[min(380px,calc(100vw-8px))] max-w-[calc(100vw-8px)] rounded-t-[6px] overflow-hidden border border-[#002275] shadow-[4px_-4px_24px_rgba(0,0,0,0.55)] z-[10000] font-['Tahoma',sans-serif] text-[11px] select-none flex flex-col"
       style={{
         boxShadow: "3px -3px 20px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.5)",
       }}

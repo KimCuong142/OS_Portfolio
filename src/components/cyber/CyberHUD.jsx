@@ -143,9 +143,19 @@ const CyberHUD = ({ active = true }) => {
         <span className="hud-corner bottom-0 right-0 border-b border-r" />
       </div>
 
-      <div className="absolute inset-0 flex flex-col justify-between px-4 sm:px-6 pt-16 sm:pt-20 pb-6">
-        {/* Top row */}
-        <div className="flex justify-between">
+      <div className="absolute inset-0 flex flex-col justify-between px-3 sm:px-6 pt-14 sm:pt-20 pb-4 sm:pb-6 pointer-events-none">
+        {/* Mobile-only compact telemetry strip */}
+        <div className="flex md:hidden justify-between items-center text-[9px] tracking-wider opacity-85 px-1 pt-1">
+          <span className="font-bold flex items-center gap-1.5 text-[#00f0ff]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-pulse" />
+            SYS::ONLINE
+          </span>
+          <span className="text-[#00f0ff]/80">PING: {stats.ping}MS</span>
+          <span className="text-[#00f0ff]/60">{clock}</span>
+        </div>
+
+        {/* Top row (Desktop / Tablet) */}
+        <div className="hidden md:flex justify-between">
           <section className="hud-panel" data-side="left">
             <Heading>SYS_MONITOR</Heading>
             <div className="hud-line flex items-center gap-2 pt-1">
@@ -174,8 +184,8 @@ const CyberHUD = ({ active = true }) => {
           </section>
         </div>
 
-        {/* Bottom row */}
-        <div className="flex justify-between items-end pb-16">
+        {/* Bottom row (Desktop / Tablet) */}
+        <div className="hidden md:flex justify-between items-end pb-16">
           <section className="hud-panel" data-side="left">
             <Heading>SEC_SCAN</Heading>
             <div className="hud-line text-[10px] opacity-80 pt-1">THREAT::NONE</div>
@@ -195,7 +205,7 @@ const CyberHUD = ({ active = true }) => {
                 <circle r="17" fill="none" stroke="currentColor" strokeOpacity="0.25" />
                 <circle r="7" fill="none" stroke="currentColor" strokeOpacity="0.25" />
                 <line x1="-27" x2="27" stroke="currentColor" strokeOpacity="0.2" />
-                <line y1="-27" y2="27" stroke="currentColor" strokeOpacity="0.2" />
+                <line y1="-27" x2="27" stroke="currentColor" strokeOpacity="0.2" />
                 <g className="hud-radar-sweep">
                   <path d="M0 0 L27 0 A27 27 0 0 0 19 -19 Z" fill="url(#radarGrad)" />
                   <line x1="0" y1="0" x2="27" y2="0" stroke="currentColor" />
@@ -205,7 +215,7 @@ const CyberHUD = ({ active = true }) => {
                 <defs>
                   <linearGradient id="radarGrad" x1="0" y1="0" x2="1" y2="-1">
                     <stop offset="0" stopColor="#00f0ff" stopOpacity="0.5" />
-                    <stop offset="1" stopColor="#00f0ff" stopOpacity="0" />
+                    <stop offset="1" stopColor="#00f0ff" stopOpacity="0.5" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -217,7 +227,6 @@ const CyberHUD = ({ active = true }) => {
               <div className="hud-line text-[10px] opacity-80">BW::{bar(stats.bw * 15, 7)}</div>
               <div className="hud-line text-[10px] font-bold">{stats.bw}PB/S</div>
               <div className="hud-line text-[9px] opacity-60">UPTIME::18249D 07H 23M</div>
-              <div className="hud-line text-[9px] opacity-60">LAST_SYNC::0.{String(stats.ping * 37).padStart(4, "0")}S</div>
             </section>
           </div>
         </div>

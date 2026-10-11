@@ -112,21 +112,21 @@ const Home = () => {
     return (
       <section
         id="xp-home"
-        className="absolute inset-0 p-6 pt-7 pointer-events-none select-none z-10 font-['Tahoma',sans-serif]"
+        className="absolute inset-0 p-3 sm:p-6 pt-20 sm:pt-7 pointer-events-none select-none z-10 font-['Tahoma',sans-serif] overflow-y-auto sm:overflow-visible pb-12 sm:pb-0"
       >
-        <div className="grid grid-flow-col grid-rows-3 gap-y-7 gap-x-6 w-fit pointer-events-auto">
+        <div className="grid grid-cols-3 sm:grid-flow-col sm:grid-rows-3 gap-y-4 sm:gap-y-7 gap-x-2 sm:gap-x-6 w-full sm:w-fit max-w-[380px] sm:max-w-none mx-auto sm:mx-0 pointer-events-auto">
           {xpDesktopItems.map((item) => (
             <div
               key={item.id}
               onClick={item.action}
-              className="xp-desktop-item group flex flex-col items-center justify-start w-[76px] p-1 rounded-sm cursor-pointer hover:bg-[#0b61ff]/30 active:bg-[#0b61ff]/50 border border-transparent hover:border-[#ffffff]/40 transition-colors"
+              className="xp-desktop-item group flex flex-col items-center justify-start w-full sm:w-[76px] p-1 rounded-sm cursor-pointer hover:bg-[#0b61ff]/30 active:bg-[#0b61ff]/50 border border-transparent hover:border-[#ffffff]/40 transition-colors"
             >
               <img
                 src={item.icon}
                 alt={item.name}
                 className="w-8 h-8 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)] group-hover:scale-105 transition-transform pointer-events-none"
               />
-              <span className="text-[11px] text-white text-center mt-1 px-1 py-0.5 rounded leading-tight drop-shadow-[1px_1px_1px_rgba(0,0,0,0.95)] line-clamp-2 select-none">
+              <span className="text-[10px] sm:text-[11px] text-white text-center mt-1 px-1 py-0.5 rounded leading-tight drop-shadow-[1px_1px_1px_rgba(0,0,0,0.95)] line-clamp-2 select-none">
                 {item.name}
               </span>
             </div>

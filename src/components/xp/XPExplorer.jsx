@@ -313,11 +313,11 @@ const XPExplorer = () => {
         {/* Separator */}
         <div className="w-[1px] h-5 bg-[#c8c4b7] border-r border-white mx-0.5" />
 
-        {/* Search Button */}
+        {/* Search Button (desktop only) */}
         <button
           type="button"
           onClick={() => {}}
-          className="flex items-center gap-1 px-1.5 py-0.5 rounded-[3px] border border-transparent hover:border-[#a09e96] hover:bg-[#faf8f0] active:bg-[#dedac5] cursor-pointer"
+          className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded-[3px] border border-transparent hover:border-[#a09e96] hover:bg-[#faf8f0] active:bg-[#dedac5] cursor-pointer"
         >
           <img
             src="/xp/Icon/Search.png"
@@ -331,7 +331,7 @@ const XPExplorer = () => {
         <button
           type="button"
           onClick={() => setShowFolders(!showFolders)}
-          className={`flex items-center gap-1 px-2 py-0.5 rounded-[2px] transition-all cursor-pointer ${
+          className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-[2px] transition-all cursor-pointer ${
             showFolders
               ? "bg-[#dedac5] border border-[#7f9db9] shadow-[inset_1px_1px_2px_rgba(0,0,0,0.25)] font-medium"
               : "border border-transparent hover:border-[#a09e96] hover:bg-[#faf8f0]"
@@ -345,13 +345,13 @@ const XPExplorer = () => {
           <span>Folders</span>
         </button>
 
-        {/* Separator */}
-        <div className="w-[1px] h-5 bg-[#c8c4b7] border-r border-white mx-0.5" />
+        {/* Separator (desktop only) */}
+        <div className="hidden sm:block w-[1px] h-5 bg-[#c8c4b7] border-r border-white mx-0.5" />
 
-        {/* Views */}
+        {/* Views (desktop only) */}
         <button
           type="button"
-          className="flex items-center gap-1 px-1.5 py-0.5 rounded-[3px] border border-transparent hover:border-[#a09e96] hover:bg-[#faf8f0] active:bg-[#dedac5] cursor-pointer"
+          className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded-[3px] border border-transparent hover:border-[#a09e96] hover:bg-[#faf8f0] active:bg-[#dedac5] cursor-pointer"
         >
           <div className="w-3.5 h-3.5 border border-gray-600 grid grid-cols-2 gap-[1px] p-[1px] bg-white">
             <span className="bg-blue-600" />
@@ -364,9 +364,9 @@ const XPExplorer = () => {
       </div>
 
       {/* 4. Address Bar */}
-      <div className="flex items-center gap-2 px-2 py-1 bg-[#ece9d8] border-b border-[#9c9a91] text-[11px] flex-shrink-0">
-        <span className="text-[#555555] font-normal">Address</span>
-        <div className="flex-1 flex items-center h-[22px] bg-white border border-[#7f9db9] shadow-[inset_1px_1px_1px_rgba(0,0,0,0.15)] px-1.5">
+      <div className="flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-2 py-1 bg-[#ece9d8] border-b border-[#9c9a91] text-[11px] flex-shrink-0">
+        <span className="text-[#555555] font-normal hidden sm:inline">Address</span>
+        <div className="flex-1 flex items-center h-[22px] bg-white border border-[#7f9db9] shadow-[inset_1px_1px_1px_rgba(0,0,0,0.15)] px-1.5 min-w-0">
           <img
             src={icon}
             alt=""
@@ -381,12 +381,12 @@ const XPExplorer = () => {
         {/* Go Button */}
         <button
           type="button"
-          className="h-[22px] px-2 flex items-center gap-1 bg-gradient-to-b from-[#5bb75b] via-[#388e3c] to-[#256628] hover:from-[#66cc66] hover:to-[#2e7d32] border border-[#1b5e20] text-white text-[11px] font-bold rounded-[2px] shadow-[0_1px_1px_rgba(0,0,0,0.3)] active:brightness-90 cursor-pointer"
+          className="h-[22px] px-1.5 sm:px-2 flex items-center gap-1 bg-gradient-to-b from-[#5bb75b] via-[#388e3c] to-[#256628] hover:from-[#66cc66] hover:to-[#2e7d32] border border-[#1b5e20] text-white text-[11px] font-bold rounded-[2px] shadow-[0_1px_1px_rgba(0,0,0,0.3)] active:brightness-90 cursor-pointer flex-shrink-0"
         >
           <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 fill-current">
             <path d="M4 2l8 6-8 6V2z" />
           </svg>
-          <span>Go</span>
+          <span className="hidden sm:inline">Go</span>
         </button>
       </div>
 
@@ -394,7 +394,7 @@ const XPExplorer = () => {
       <div className="flex-1 flex overflow-hidden bg-white border border-[#7f9db9] m-0.5">
         {/* Left Pane: Folders Tree */}
         {showFolders && (
-          <div className="w-[210px] flex-shrink-0 flex flex-col bg-white border-r border-[#7f9db9] overflow-hidden">
+          <div className="w-[130px] sm:w-[210px] flex-shrink-0 flex flex-col bg-white border-r border-[#7f9db9] overflow-hidden">
             {/* Folders Header with [X] */}
             <div className="h-[22px] px-2 bg-gradient-to-b from-[#f5f3ec] to-[#dedac5] border-b border-[#7f9db9] flex items-center justify-between text-[#000000] font-bold text-[11px]">
               <span>Folders</span>

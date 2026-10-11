@@ -68,8 +68,17 @@ const CyberBackground = () => {
       ctx.scale(dpr, dpr);
 
       const height = window.innerHeight;
-      const rowHeight = height / 3;
-      const targetFontSize = (rowHeight / 0.7) * 0.95;
+      const width = window.innerWidth;
+      const isPortrait = height > width * 0.95;
+
+      let rowHeight = height / 3;
+      let targetFontSize = (rowHeight / 0.7) * 0.95;
+
+      if (isPortrait) {
+        const maxFontSizeByWidth = (width / 14) * 2.2;
+        targetFontSize = Math.min(targetFontSize, maxFontSizeByWidth);
+      }
+
       cachedMetrics = computeMetrics(targetFontSize);
     };
 
@@ -118,8 +127,17 @@ const CyberBackground = () => {
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, width, height);
 
-      const rowHeight = height / 3;
-      const targetFontSize = (rowHeight / 0.7) * 0.95;
+      const isPortrait = height > width * 0.95;
+      let rowHeight = height / 3;
+      let targetFontSize = (rowHeight / 0.7) * 0.95;
+      let offsetY = 0;
+
+      if (isPortrait) {
+        const maxFontSizeByWidth = (width / 14) * 2.2;
+        targetFontSize = Math.min(targetFontSize, maxFontSizeByWidth);
+        rowHeight = targetFontSize * 1.18;
+        offsetY = (height - rowHeight * 3) / 2;
+      }
 
       if (!cachedMetrics || Math.abs(cachedFontSize - targetFontSize) > 1) {
         cachedMetrics = computeMetrics(targetFontSize);
@@ -127,7 +145,7 @@ const CyberBackground = () => {
         ctx.font = `900 ${cachedFontSize}px 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif`;
       }
 
-      const mouseRow = Math.floor(mouse.y / rowHeight);
+      const mouseRow = Math.floor((mouse.y - offsetY) / rowHeight);
       const isMouseActive = mouse.targetX >= 0 && mouse.targetY >= 0;
       const availableWidth = width - 4;
       const startX = 2;
@@ -135,7 +153,7 @@ const CyberBackground = () => {
       cachedMetrics.forEach((lineData, lineIdx) => {
         const { chars, metrics, totalBaseInkW } = lineData;
         const numChars = chars.length;
-        const rowCenterY = (lineIdx + 0.5) * rowHeight;
+        const rowCenterY = offsetY + (lineIdx + 0.5) * rowHeight;
 
         // Base widths calculated using precomputed ink metrics (touching with 0 gap)
         const baseWidths = metrics.map(

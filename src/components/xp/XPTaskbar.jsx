@@ -111,49 +111,47 @@ const XPTaskbar = () => {
             </span>
           </button>
 
-          {/* Quick Launch separator */}
-          <div className="w-[3px] h-4 border-l border-white/30 border-r border-black/30 mx-1.5" />
-
-          {/* Quick Launch Icons */}
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              title="Show Desktop"
-              onClick={handleShowDesktop}
-              className="p-1 hover:bg-[#1a44a6] rounded-sm cursor-pointer transition-colors"
-            >
-              <div className="w-3.5 h-3.5 border border-white/80 bg-[#1e52cf]/60 rounded-[1px] flex items-end justify-center pb-0.5">
-                <span className="w-2 h-1 bg-white/70" />
-              </div>
-            </button>
-            <button
-              type="button"
-              title="Internet Explorer"
-              onClick={() => openWindow("safari")}
-              className="p-1 hover:bg-[#1a44a6] rounded-sm cursor-pointer transition-colors"
-            >
-              <img
-                src="/xp/Icon/Internet Explorer.png"
-                alt="IE"
-                className="w-3.5 h-3.5 object-contain"
-              />
-            </button>
-            <button
-              type="button"
-              title="Windows Media Player"
-              onClick={() => openWindow("photos")}
-              className="p-1 hover:bg-[#1a44a6] rounded-sm cursor-pointer transition-colors"
-            >
-              <img
-                src="/xp/Icon/Windows Media Player.png"
-                alt="WMP"
-                className="w-3.5 h-3.5 object-contain"
-              />
-            </button>
+          {/* Quick Launch separator & Icons (desktop only) */}
+          <div className="hidden sm:flex items-center">
+            <div className="w-[3px] h-4 border-l border-white/30 border-r border-black/30 mx-1.5" />
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                title="Show Desktop"
+                onClick={handleShowDesktop}
+                className="p-1 hover:bg-[#1a44a6] rounded-sm cursor-pointer transition-colors"
+              >
+                <div className="w-3.5 h-3.5 border border-white/80 bg-[#1e52cf]/60 rounded-[1px] flex items-end justify-center pb-0.5">
+                  <span className="w-2 h-1 bg-white/70" />
+                </div>
+              </button>
+              <button
+                type="button"
+                title="Internet Explorer"
+                onClick={() => openWindow("safari")}
+                className="p-1 hover:bg-[#1a44a6] rounded-sm cursor-pointer transition-colors"
+              >
+                <img
+                  src="/xp/Icon/Internet Explorer.png"
+                  alt="IE"
+                  className="w-3.5 h-3.5 object-contain"
+                />
+              </button>
+              <button
+                type="button"
+                title="Windows Media Player"
+                onClick={() => openWindow("photos")}
+                className="p-1 hover:bg-[#1a44a6] rounded-sm cursor-pointer transition-colors"
+              >
+                <img
+                  src="/xp/Icon/Windows Media Player.png"
+                  alt="WMP"
+                  className="w-3.5 h-3.5 object-contain"
+                />
+              </button>
+            </div>
+            <div className="w-[3px] h-5 border-l border-white/30 border-r border-black/30 mx-1.5" />
           </div>
-
-          {/* Quick Launch right divider */}
-          <div className="w-[3px] h-5 border-l border-white/30 border-r border-black/30 mx-1.5" />
         </div>
 
         {/* Center: Open Window Items */}
@@ -170,14 +168,14 @@ const XPTaskbar = () => {
                 key={key}
                 type="button"
                 onClick={() => handleTaskbarItemClick(key, winState)}
-                className={`h-[24px] max-w-[170px] min-w-[110px] px-2 flex items-center gap-1.5 rounded-[3px] cursor-pointer text-left transition-all ${
+                className={`h-[24px] max-w-[170px] min-w-[70px] sm:min-w-[110px] px-1.5 sm:px-2 flex items-center gap-1 sm:gap-1.5 rounded-[3px] cursor-pointer text-left transition-all ${
                   active
                     ? "bg-[#1e4db9] border border-[#0d2a70] shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)] font-bold text-white"
                     : "bg-gradient-to-b from-[#3c80f4] via-[#2056cd] to-[#1a44a6] border border-[#00287a] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] hover:brightness-110 text-white/95"
                 }`}
               >
-                <img src={meta.icon} alt="" className="w-4 h-4 object-contain flex-shrink-0" />
-                <span className="truncate leading-none text-[11px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
+                <img src={meta.icon} alt="" className="w-3.5 sm:w-4 h-3.5 sm:h-4 object-contain flex-shrink-0" />
+                <span className="truncate leading-none text-[10px] sm:text-[11px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
                   {meta.title}
                 </span>
               </button>
@@ -187,13 +185,13 @@ const XPTaskbar = () => {
 
         {/* Right Side: System Tray (Notification Area) */}
         <div
-          className="h-full px-3 flex items-center gap-2.5 border-l border-[#082260] shadow-[inset_1px_0_0_rgba(255,255,255,0.2)]"
+          className="h-full px-2 sm:px-3 flex items-center gap-1.5 sm:gap-2.5 border-l border-[#082260] shadow-[inset_1px_0_0_rgba(255,255,255,0.2)] flex-shrink-0"
           style={{
             background: "linear-gradient(180deg, #0e3599 0%, #1642b3 100%)",
           }}
         >
-          {/* Status Icons */}
-          <div className="flex items-center gap-1.5 opacity-90">
+          {/* Status Icons (hidden on very small mobile) */}
+          <div className="hidden sm:flex items-center gap-1.5 opacity-90">
             {/* Sound Icon */}
             <svg
               viewBox="0 0 16 16"

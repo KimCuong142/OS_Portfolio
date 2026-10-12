@@ -54,6 +54,7 @@ const CyberTunnel3D = ({ active = true }) => {
 
     if (!active) {
       engine.pause();
+      document.body.classList.remove("cyber-hide-cursor");
       gsap.to(reticle, { opacity: 0, scale: 0.6, duration: 0.2, overwrite: "auto" });
       return;
     }
@@ -86,8 +87,8 @@ const CyberTunnel3D = ({ active = true }) => {
       scale: 0.8,
     });
 
-    const moveX = gsap.quickTo(reticle, "x", { duration: 0.16, ease: "power3.out" });
-    const moveY = gsap.quickTo(reticle, "y", { duration: 0.16, ease: "power3.out" });
+    const setX = gsap.quickSetter(reticle, "x", "px");
+    const setY = gsap.quickSetter(reticle, "y", "px");
 
     const chevrons = reticle.querySelector(".reticle-chevrons");
     gsap.to(chevrons, {
@@ -109,17 +110,22 @@ const CyberTunnel3D = ({ active = true }) => {
       gsap.to(reticle, {
         opacity: show ? 1 : 0,
         scale: show ? 1 : 0.6,
-        duration: 0.2,
+        duration: 0.15,
         overwrite: "auto",
       });
+      if (show) {
+        document.body.classList.add("cyber-hide-cursor");
+      } else {
+        document.body.classList.remove("cyber-hide-cursor");
+      }
     };
 
     const onPointerMove = (e) => {
       const nx = (e.clientX / window.innerWidth) * 2 - 1;
       const ny = -((e.clientY / window.innerHeight) * 2 - 1);
       engine.setMouse(nx, ny);
-      moveX(e.clientX);
-      moveY(e.clientY);
+      setX(e.clientX);
+      setY(e.clientY);
       showReticle(!isOverUI(e.target));
       gsap.to(u.uRepel, { value: 1.0, duration: 0.4, ease: "power2.out", overwrite: "auto" });
     };
@@ -165,6 +171,7 @@ const CyberTunnel3D = ({ active = true }) => {
 
     return () => {
       pulseCall?.kill();
+      document.body.classList.remove("cyber-hide-cursor");
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("mouseout", onPointerLeave);

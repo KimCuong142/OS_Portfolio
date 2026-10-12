@@ -349,6 +349,8 @@ export default class TunnelEngine {
 
   setMouse(ndcX, ndcY) {
     this.targetMouse.set(ndcX, ndcY);
+    this.currentMouse.set(ndcX, ndcY);
+    this.shared.uMouse.value.set(ndcX, ndcY);
   }
 
   pause() {
@@ -392,18 +394,17 @@ export default class TunnelEngine {
     this.shared.uTravel.value += dt * this.speed;
     this.fx.uniforms.uTime.value = now;
 
-    this.currentMouse.x += (this.targetMouse.x - this.currentMouse.x) * 0.14;
-    this.currentMouse.y += (this.targetMouse.y - this.currentMouse.y) * 0.14;
-    this.shared.uMouse.value.copy(this.currentMouse);
+    // Instant 1:1 mouse tracking for zero-latency space bending
+    this.shared.uMouse.value.copy(this.targetMouse);
 
     this.fx.uniforms.uMouse.value = [
-      this.currentMouse.x * 0.5 + 0.5,
-      this.currentMouse.y * 0.5 + 0.5,
+      this.targetMouse.x * 0.5 + 0.5,
+      this.targetMouse.y * 0.5 + 0.5,
     ];
     this.fx.uniforms.uMouseForce.value = this.shared.uRepel.value;
 
-    this.cameraTilt.x += (this.currentMouse.x * 0.35 - this.cameraTilt.x) * 0.06;
-    this.cameraTilt.y += (this.currentMouse.y * 0.25 - this.cameraTilt.y) * 0.06;
+    this.cameraTilt.x += (this.targetMouse.x * 0.35 - this.cameraTilt.x) * 0.08;
+    this.cameraTilt.y += (this.targetMouse.y * 0.25 - this.cameraTilt.y) * 0.08;
     this.camera.position.x = this.cameraTilt.x;
     this.camera.position.y = this.cameraTilt.y;
     this.camera.rotation.z = -this.cameraTilt.x * 0.015;

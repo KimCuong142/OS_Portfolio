@@ -594,6 +594,11 @@ body.theme-2004 {
     filter: drop-shadow(0 0 6px #00f0ff) drop-shadow(0 0 14px rgba(0, 240, 255, 0.7));
   }
 
+  body.theme-2077.cyber-hide-cursor,
+  body.theme-2077.cyber-hide-cursor * {
+    cursor: none !important;
+  }
+
   /* ========================================= */
   /* Windows XP 2004 Luna Theme Styling        */
   /* ========================================= */

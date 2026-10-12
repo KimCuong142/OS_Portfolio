@@ -16,11 +16,11 @@ const HALF_H = 4.9;
 const TUNNEL_LEN = 165.0;
 const NEAR_Z = -2.2;
 const FAR_Z = NEAR_Z - TUNNEL_LEN;
-const RINGS = 32; // Optimized from 44 for buttery smooth performance
+const RINGS = 36;
 const DIV_FLOOR = 16;
 const DIV_CEIL = 16;
 const DIV_WALL = 10;
-const SEGMENTS_Z = 120; // Silky smooth sine curvature with 50% fewer vertices
+const SEGMENTS_Z = 440; // High tessellation density for ultra-smooth curved deformation without angular kinks
 const PARTICLES = 130;
 
 // Build longitudinal rails (Floor, Ceiling, Left wall, Right wall)
@@ -103,8 +103,8 @@ const buildTunnelRings = () => {
   const info = [];
 
   const perim = [];
-  const subH = 40; // Balanced density across floor/ceiling
-  const subV = 24; // Balanced density across walls
+  const subH = 160; // Ultra-fine subdivision along floor/ceiling for silky smooth curvature
+  const subV = 96;  // Ultra-fine subdivision along walls
 
   for (let i = 0; i < subH; i++) {
     perim.push([-HALF_W + (2 * HALF_W * i) / subH, -HALF_H]);

@@ -118,33 +118,51 @@ void main() {
 
   pos.z = z;
 
-  // 4. Ultra-Smooth 3D Elastic Dimple & Repulsion (C2 Quintic Continuous Falloff)
-  vec3 rayDir = normalize(vec3(uMouse.x * uAspect * 0.72, uMouse.y * 0.72, -1.0));
+  // 4. Ultra-Smooth Continuous Space-Bending & Elastic Curvature
+  // Calculates an unprojected ray through the cursor into the 3D tunnel corridor
+  vec3 rayDir = normalize(vec3(uMouse.x * uAspect * 0.75, uMouse.y * 0.75, -1.0));
   
-  // Find where this ray hits the tunnel inner surface (halfW = 8.2, halfH = 4.9)
+  // Find where this ray intersects the tunnel surface (halfW = 8.2, halfH = 4.9)
   float tx = (abs(rayDir.x) > 1e-4) ? (8.2 / abs(rayDir.x)) : 999.0;
   float ty = (abs(rayDir.y) > 1e-4) ? (4.9 / abs(rayDir.y)) : 999.0;
-  float tHit = clamp(min(tx, ty), 4.0, 48.0);
+  float tHit = clamp(min(tx, ty), 3.5, 50.0);
   vec3 mouseHit3D = rayDir * tHit;
 
-  // Compute 3D distance between this vertex and the cursor hit point
-  float dist3D = length(pos - mouseHit3D);
-  float repelRadius = 5.4;
+  // Vector from cursor hit point to vertex in 3D world space
+  vec3 delta = pos - mouseHit3D;
+  float dist3D = length(delta);
+  
+  // Broader, sweeping warp radius: allows lines to bend gracefully across multiple grid cells
+  float repelRadius = 9.2;
   float normDist = clamp(dist3D / repelRadius, 0.0, 1.0);
-  float tFalloff = 1.0 - normDist;
-  // Quintic smootherstep: zero 1st & 2nd derivatives at 0.0 and 1.0 (ultra-soft bell curve)
-  float repel = tFalloff * tFalloff * tFalloff * (tFalloff * (tFalloff * 6.0 - 15.0) + 10.0) * uRepel;
+  float t = 1.0 - normDist;
 
-  // Soft elastic depression (ấn lõm mặt sàn xuống dưới) + gentle outward dispersion
-  vec3 pushDir = normalize(pos - mouseHit3D + vec3(1e-4));
-  pos.y -= repel * 1.15;
-  pos.xz += pushDir.xz * repel * 0.85;
+  // C2 Continuous Quintic Bell Falloff for depth depression (1.0 at center, 0.0 at radius, zero derivatives at boundaries)
+  float bell = t * t * t * (t * (t * 6.0 - 15.0) + 10.0) * uRepel;
+
+  // Smooth lateral deflection profile that strictly goes to 0 at center (eliminating singularity/creasing)
+  // Reaches peak deflection around normDist ~ 0.35, then smoothly returns to 0
+  float lateralProfile = normDist * t * t * 4.0;
+
+  // Enhanced deflection amplitudes: bends straight lines into pronounced, flowing curves
+  float depthAmp = 2.2;    // Deep 3D elastic crater depression into tunnel surfaces
+  float lateralAmp = 3.2;  // Strong sweeping lateral curvature bowing straight grid lines
+
+  // 1. Outward tunnel cratering: push radially outward from corridor cross-section (floor down, walls out, ceiling up)
+  // 100% continuous everywhere, no if-else branching or seam artifacts!
+  vec2 outwardNorm = normalize(vec2(pos.x / 8.2, pos.y / 4.9));
+  pos.xy += outwardNorm * (bell * depthAmp);
+
+  // 2. Smooth lateral space curvature: bows straight lines outward around the cursor
+  vec3 pushDir = delta / (dist3D + 1e-3);
+  vec3 lateralDisp = pushDir * (lateralProfile * lateralAmp * uRepel);
+  pos += lateralDisp;
 
   // Camera projection
   vec4 viewPos = modelViewMatrix * vec4(pos, 1.0);
   gl_Position = projectionMatrix * viewPos;
 
-  vRepelForce = repel;
+  vRepelForce = bell;
   vZ = z;
   vSeed = aInfo.y;
   vKind = aInfo.x;

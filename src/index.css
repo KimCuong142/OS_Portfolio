@@ -645,4 +645,391 @@ body.theme-2004 {
     border-bottom: none !important;
     transform: translate3d(0px, 0px, 0px) !important;
   }
+
+  /* ========================================= */
+  /* Cyberpunk 2077 Dark Mode Window Styling   */
+  /* ========================================= */
+  body.theme-2077 #finder,
+  body.theme-2077 #terminal,
+  body.theme-2077 #contact,
+  body.theme-2077 #photos,
+  body.theme-2077 #resume,
+  body.theme-2077 #txtfile,
+  body.theme-2077 #imgfile {
+    background: rgba(3, 14, 26, 0.94) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(0, 240, 255, 0.45) !important;
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.18), inset 0 0 15px rgba(0, 240, 255, 0.04), 0 25px 60px rgba(0, 0, 0, 0.85) !important;
+    border-radius: 10px !important;
+    color: #00f0ff !important;
+  }
+
+  /* Maximized window in 2077 mode */
+  body.theme-2077 .window-maximized {
+    border: 1px solid rgba(0, 240, 255, 0.6) !important;
+    box-shadow: 0 0 35px rgba(0, 240, 255, 0.28), inset 0 0 20px rgba(0, 240, 255, 0.08), 0 30px 70px rgba(0, 0, 0, 0.9) !important;
+    border-radius: 10px !important;
+  }
+
+  /* 2077 Window Header (Titlebar) */
+  body.theme-2077 #window-header {
+    background: linear-gradient(180deg, rgba(8, 26, 44, 0.96) 0%, rgba(3, 14, 26, 0.96) 100%) !important;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.35) !important;
+    border-radius: 9px 9px 0 0 !important;
+    color: #00f0ff !important;
+  }
+
+  body.theme-2077 #window-header > h2,
+  body.theme-2077 #window-header > p {
+    color: #00f0ff !important;
+    font-family: "Orbitron", sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase !important;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.75) !important;
+  }
+
+  body.theme-2077 #window-header .icon,
+  body.theme-2077 #window-header svg {
+    color: #00f0ff !important;
+    filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.6)) !important;
+  }
+
+  /* 2077 Window Controls (Illuminated Neon Diodes) */
+  body.theme-2077 #window-controls .close {
+    background-color: #ff0055 !important;
+    border-color: rgba(255, 0, 85, 0.7) !important;
+    box-shadow: 0 0 8px rgba(255, 0, 85, 0.8) !important;
+  }
+
+  body.theme-2077 #window-controls .minimize {
+    background-color: #ffb800 !important;
+    border-color: rgba(255, 184, 0, 0.7) !important;
+    box-shadow: 0 0 8px rgba(255, 184, 0, 0.8) !important;
+  }
+
+  body.theme-2077 #window-controls .maximize {
+    background-color: #00f0ff !important;
+    border-color: rgba(0, 240, 255, 0.7) !important;
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.8) !important;
+  }
+
+  body.theme-2077 #window-controls .close svg,
+  body.theme-2077 #window-controls .minimize svg,
+  body.theme-2077 #window-controls .maximize svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+  }
+
+  /* 1. Terminal (Tech Stack) in 2077 Mode */
+  body.theme-2077 #terminal .techstack {
+    background: transparent !important;
+    color: #e0f7fa !important;
+    font-family: "Share Tech Mono", monospace !important;
+  }
+
+  body.theme-2077 #terminal .techstack .command-text {
+    color: #00f0ff !important;
+  }
+
+  body.theme-2077 #terminal .techstack .command-text .font-bold {
+    color: #ff0055 !important;
+    text-shadow: 0 0 8px rgba(255, 0, 85, 0.7) !important;
+  }
+
+  body.theme-2077 #terminal .techstack .command-text .typing-text {
+    color: #00f0ff !important;
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.6) !important;
+  }
+
+  body.theme-2077 #terminal .techstack .cursor {
+    color: #00f0ff !important;
+    text-shadow: 0 0 10px #00f0ff !important;
+  }
+
+  body.theme-2077 #terminal .techstack .label {
+    color: #7df9ff !important;
+    font-family: "Orbitron", sans-serif !important;
+    font-size: 11px !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    opacity: 0.85;
+  }
+
+  body.theme-2077 #terminal .techstack .content {
+    border-color: rgba(0, 240, 255, 0.25) !important;
+  }
+
+  body.theme-2077 #terminal .techstack .content h3 {
+    color: #00f0ff !important;
+    font-weight: 600 !important;
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.5) !important;
+  }
+
+  body.theme-2077 #terminal .techstack .content .check {
+    color: #00ffcc !important;
+    filter: drop-shadow(0 0 4px #00ffcc) !important;
+  }
+
+  body.theme-2077 #terminal .techstack .content ul li {
+    color: #bbf2f6 !important;
+  }
+
+  body.theme-2077 #terminal .techstack .footnote {
+    color: #00ffcc !important;
+    text-shadow: 0 0 6px rgba(0, 255, 204, 0.4) !important;
+  }
+
+  body.theme-2077 #terminal .techstack .footnote p {
+    color: #00ffcc !important;
+  }
+
+  body.theme-2077 #terminal .techstack .footnote p.text-black,
+  body.theme-2077 #terminal .techstack .footnote p:last-child {
+    color: #ff0055 !important;
+    text-shadow: 0 0 6px rgba(255, 0, 85, 0.4) !important;
+  }
+
+  body.theme-2077 #terminal .techstack .footnote p:last-child svg {
+    color: #ff0055 !important;
+    fill: #ff0055 !important;
+    filter: drop-shadow(0 0 4px #ff0055) !important;
+  }
+
+  /* 2. Contact Window in 2077 Mode */
+  body.theme-2077 #contact > div {
+    background: transparent !important;
+  }
+
+  body.theme-2077 #contact img.rounded-full {
+    border: 2px solid #00f0ff !important;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.5) !important;
+  }
+
+  body.theme-2077 #contact h3 {
+    color: #00f0ff !important;
+    font-family: "Orbitron", sans-serif !important;
+    letter-spacing: 0.08em !important;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.6) !important;
+  }
+
+  body.theme-2077 #contact p {
+    color: #a0c4de !important;
+    font-family: "Share Tech Mono", monospace !important;
+  }
+
+  body.theme-2077 #contact a.email-link,
+  body.theme-2077 #contact a[href^="mailto:"] {
+    color: #00f0ff !important;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.5) !important;
+    font-family: "Share Tech Mono", monospace !important;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+
+  body.theme-2077 #contact a.email-link:hover,
+  body.theme-2077 #contact a[href^="mailto:"]:hover {
+    color: #7df9ff !important;
+    text-shadow: 0 0 14px #00f0ff !important;
+  }
+
+  body.theme-2077 #contact ul li {
+    background: rgba(3, 16, 28, 0.85) !important;
+    border: 1px solid rgba(0, 240, 255, 0.45) !important;
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.15), inset 0 0 8px rgba(0, 240, 255, 0.05) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  body.theme-2077 #contact ul li:first-child {
+    border-color: rgba(255, 0, 85, 0.5) !important;
+    box-shadow: 0 0 14px rgba(255, 0, 85, 0.2) !important;
+  }
+
+  body.theme-2077 #contact ul li:first-child:hover {
+    border-color: #ff0055 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 85, 0.5) !important;
+  }
+
+  body.theme-2077 #contact ul li:last-child {
+    border-color: rgba(0, 240, 255, 0.5) !important;
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.2) !important;
+  }
+
+  body.theme-2077 #contact ul li:last-child:hover {
+    border-color: #00f0ff !important;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.5) !important;
+  }
+
+  /* 3. Finder (Projects & Files) in 2077 Mode */
+  body.theme-2077 #finder > div {
+    background: transparent !important;
+  }
+
+  body.theme-2077 #finder .sidebar {
+    background: rgba(3, 16, 28, 0.95) !important;
+    border-right: 1px solid rgba(0, 240, 255, 0.25) !important;
+  }
+
+  body.theme-2077 #finder .sidebar h3 {
+    color: #00f0ff !important;
+    font-family: "Orbitron", sans-serif !important;
+    font-size: 10px !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    opacity: 0.85;
+  }
+
+  body.theme-2077 #finder .sidebar ul .active {
+    background: rgba(0, 240, 255, 0.18) !important;
+    color: #00f0ff !important;
+    border: 1px solid rgba(0, 240, 255, 0.5) !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.25) !important;
+  }
+
+  body.theme-2077 #finder .sidebar ul .not-active {
+    color: #a0c4de !important;
+  }
+
+  body.theme-2077 #finder .sidebar ul .not-active:hover {
+    background: rgba(0, 240, 255, 0.08) !important;
+    color: #00f0ff !important;
+  }
+
+  body.theme-2077 #finder .content {
+    background: rgba(2, 10, 20, 0.98) !important;
+  }
+
+  body.theme-2077 #finder .content li p {
+    color: #e0f7fa !important;
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.35) !important;
+  }
+
+  body.theme-2077 #finder .content li:hover img {
+    filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.7)) !important;
+  }
+
+  /* 4. Photos (Gallery) in 2077 Mode */
+  body.theme-2077 #photos > div {
+    background: transparent !important;
+  }
+
+  body.theme-2077 #photos .sidebar {
+    background: rgba(3, 16, 28, 0.95) !important;
+    border-color: rgba(0, 240, 255, 0.25) !important;
+  }
+
+  body.theme-2077 #photos .sidebar h2 {
+    color: #00f0ff !important;
+    font-family: "Orbitron", sans-serif !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+  }
+
+  body.theme-2077 #photos .sidebar ul li {
+    color: #a0c4de !important;
+  }
+
+  body.theme-2077 #photos .sidebar ul li:first-child {
+    background: rgba(0, 240, 255, 0.18) !important;
+    color: #00f0ff !important;
+    border: 1px solid rgba(0, 240, 255, 0.5) !important;
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
+  }
+
+  body.theme-2077 #photos .gallery {
+    background: rgba(2, 10, 20, 0.98) !important;
+  }
+
+  body.theme-2077 #photos .gallery ul li img {
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    transition: all 0.25s ease-out;
+  }
+
+  body.theme-2077 #photos .gallery ul li:hover img {
+    border-color: #00f0ff;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
+    transform: scale(1.02);
+  }
+
+  /* 5. Resume (PDF Reader) in 2077 Mode */
+  body.theme-2077 #resume > div {
+    background: rgba(2, 10, 20, 0.95) !important;
+  }
+
+  body.theme-2077 #resume a[download] {
+    color: #00f0ff !important;
+  }
+
+  body.theme-2077 #resume .react-pdf__Page__canvas {
+    border: 1px solid rgba(0, 240, 255, 0.35) !important;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2) !important;
+    border-radius: 4px !important;
+  }
+
+  /* 6. Text File Window in 2077 Mode */
+  body.theme-2077 #txtfile > div {
+    background: rgba(2, 10, 20, 0.95) !important;
+    color: #e0f7fa !important;
+  }
+
+  body.theme-2077 #txtfile .text-file-subtitle {
+    color: #00f0ff !important;
+    font-family: "Orbitron", sans-serif !important;
+    font-size: 1rem !important;
+    letter-spacing: 0.05em !important;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.6) !important;
+  }
+
+  body.theme-2077 #txtfile .text-file-image {
+    border: 1px solid rgba(0, 240, 255, 0.3) !important;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.2) !important;
+    border-radius: 8px !important;
+  }
+
+  body.theme-2077 #txtfile .text-file-description p {
+    color: #b0d2e8 !important;
+    line-height: 1.7 !important;
+  }
+
+  /* 7. Image File Window in 2077 Mode */
+  body.theme-2077 #imgfile > div,
+  body.theme-2077 #imgfile .preview,
+  body.theme-2077 #imgfile .image-file-content {
+    background: rgba(2, 10, 20, 0.95) !important;
+  }
+
+  body.theme-2077 #imgfile .image-file-title {
+    color: #00f0ff !important;
+    font-family: "Orbitron", sans-serif !important;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.6) !important;
+  }
+
+  body.theme-2077 #imgfile img {
+    border: 1px solid rgba(0, 240, 255, 0.35) !important;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.25) !important;
+    border-radius: 6px !important;
+  }
+
+  /* 2077 Cybernetic Scrollbars */
+  body.theme-2077 ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  body.theme-2077 ::-webkit-scrollbar-track {
+    background: rgba(2, 10, 18, 0.7);
+  }
+
+  body.theme-2077 ::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.35);
+    border-radius: 3px;
+  }
+
+  body.theme-2077 ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 240, 255, 0.75);
+    box-shadow: 0 0 8px #00f0ff;
+  }
 }

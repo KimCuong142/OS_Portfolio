@@ -163,10 +163,10 @@ const Dock = () => {
           const intensity = Math.exp(-(distance ** 2.4) / 18000);
 
           gsap.to(icon, {
-            scale: 1 + (is2077 ? 0.32 : 0.25) * intensity,
-            y: (is2077 ? -18 : -14) * intensity,
-            duration: 0.22,
-            ease: "power2.out",
+            scale: 1 + (is2077 ? 0.32 : 0.32) * intensity,
+            y: (is2077 ? -18 : -18) * intensity,
+            duration: 0.12,
+            ease: "back.out(1.5)",
             overwrite: "auto",
           });
         });
@@ -184,7 +184,7 @@ const Dock = () => {
           gsap.to(icon, {
             scale: 1,
             y: 0,
-            duration: 0.28,
+            duration: 0.15,
             ease: "power2.out",
             overwrite: "auto",
           })
@@ -227,8 +227,8 @@ const Dock = () => {
   if (currentYear === "2004") return null;
 
   return (
-    <section id="dock" className="select-none">
-      <div ref={dockRootRef} className="relative group">
+    <section id="dock" className="select-none overflow-visible">
+      <div ref={dockRootRef} className="relative group overflow-visible">
         {/* Futuristic Cockpit bracket backdrop in 2077 mode */}
         {is2077 && (
           <div className="cyber-bracket-bottom absolute -inset-x-10 -top-3.5 -bottom-1 bg-[#00f0ff]/10 border-t border-[#00f0ff]/40 transition-all duration-300 pointer-events-none" />
@@ -283,7 +283,7 @@ const Dock = () => {
         <div
           ref={dockRef}
           className={clsx(
-            "dock-container relative z-10 transition-all duration-300",
+            "dock-container relative z-10 transition-all duration-300 overflow-visible",
             is2077
               ? "cyber-dock-container"
               : is2026
@@ -296,7 +296,7 @@ const Dock = () => {
             return (
               <div
                 key={id}
-                className="relative flex flex-col items-center justify-center px-0.5 sm:px-1"
+                className="relative flex flex-col items-center justify-center px-0.5 sm:px-1 overflow-visible"
               >
                 <button
                   type="button"
@@ -316,7 +316,7 @@ const Dock = () => {
                     alt={name}
                     loading="lazy"
                     className={clsx(
-                      "transition-all duration-200",
+                      "transition-opacity duration-150",
                       canOpen ? "" : "opacity-50",
                       is2077 && "filter brightness-110"
                     )}

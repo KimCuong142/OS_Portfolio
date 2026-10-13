@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { navIcons, navLinks } from "#constants";
 import useThemeStore from "#store/theme";
 import useWindowStore from "#store/window";
@@ -8,6 +9,47 @@ const Navbar = () => {
   const { openWindow } = useWindowStore();
   const { currentYear } = useThemeStore();
   const is2077 = currentYear === "2077";
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(
+        Boolean(document.fullscreenElement || document.webkitFullscreenElement)
+      );
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    document.addEventListener("webkitfullscreenchange", handleFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFsChange);
+      document.removeEventListener("webkitfullscreenchange", handleFsChange);
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    const isFs = Boolean(
+      document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+    );
+    if (!isFs) {
+      const elem = document.documentElement;
+      const request =
+        elem.requestFullscreen ||
+        elem.webkitRequestFullscreen ||
+        elem.mozRequestFullScreen ||
+        elem.msRequestFullscreen;
+      request?.call(elem)?.catch?.(() => {});
+    } else {
+      const exit =
+        document.exitFullscreen ||
+        document.webkitExitFullscreen ||
+        document.mozCancelFullScreen ||
+        document.msExitFullscreen;
+      exit?.call(document)?.catch?.(() => {});
+    }
+  };
 
   // Windows XP does not have a top macOS menubar
   if (currentYear === "2004") return null;
@@ -67,14 +109,25 @@ const Navbar = () => {
         <ul className="flex items-center gap-2 max-sm:hidden">
           {navIcons.map(({ id, img }) => (
             <li key={id}>
-              <img
-                src={img}
+              <button
+                type="button"
+                onClick={id === 4 ? toggleFullscreen : undefined}
                 className={clsx(
-                  "icon-hover size-4 transition-all",
-                  is2077 && "filter brightness-150 contrast-125"
+                  "focus:outline-none flex items-center justify-center p-0.5 rounded transition-all",
+                  id === 4 ? "cursor-pointer hover:bg-black/5 active:scale-95" : "cursor-default"
                 )}
-                alt={`icons-${id}`}
-              />
+                title={id === 4 ? (isFullscreen ? "Exit Fullscreen" : "Fullscreen") : undefined}
+              >
+                <img
+                  src={img}
+                  className={clsx(
+                    "icon-hover size-4 transition-all",
+                    is2077 && "filter brightness-150 contrast-125",
+                    id === 4 && isFullscreen && "opacity-90"
+                  )}
+                  alt={`icons-${id}`}
+                />
+              </button>
             </li>
           ))}
         </ul>

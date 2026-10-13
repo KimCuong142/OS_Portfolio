@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 const useThemeStore = create((set) => ({
-  currentYear: "2077",
+  currentYear: "2026",
   setYear: (year) => set({ currentYear: year }),
 }));
 

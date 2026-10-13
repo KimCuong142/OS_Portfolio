@@ -41,6 +41,55 @@ const App = () => {
     }
   }, [is2077, is2004]);
 
+  // Auto-request Fullscreen on the very first direct user gesture (click / tap)
+  useEffect(() => {
+    let triggered = false;
+
+    const requestFullscreenOnGesture = () => {
+      if (triggered) return;
+      triggered = true;
+
+      const isFs = Boolean(
+        document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+      );
+
+      if (!isFs) {
+        const elem = document.documentElement;
+        const request =
+          elem.requestFullscreen ||
+          elem.webkitRequestFullscreen ||
+          elem.mozRequestFullScreen ||
+          elem.msRequestFullscreen;
+
+        if (request) {
+          try {
+            const promise = request.call(elem);
+            if (promise && typeof promise.catch === "function") {
+              promise.catch(() => {});
+            }
+          } catch {
+            // Silently ignore if blocked by browser policy
+          }
+        }
+      }
+
+      cleanup();
+    };
+
+    const cleanup = () => {
+      window.removeEventListener("click", requestFullscreenOnGesture, true);
+      window.removeEventListener("touchend", requestFullscreenOnGesture, true);
+    };
+
+    window.addEventListener("click", requestFullscreenOnGesture, true);
+    window.addEventListener("touchend", requestFullscreenOnGesture, true);
+
+    return cleanup;
+  }, []);
+
   return (
     <main
       className={clsx(

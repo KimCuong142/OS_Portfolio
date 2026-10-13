@@ -1,5 +1,7 @@
+import { useRef, useEffect } from "react";
 import useThemeStore from "#store/theme";
 import clsx from "clsx";
+import { LiquidGlass } from "@ybouane/liquidglass";
 
 const YEARS = ["2004", "2026", "2077"];
 
@@ -7,26 +9,187 @@ const TimelineSelector = () => {
   const { currentYear, setYear } = useThemeStore();
   const is2077 = currentYear === "2077";
   const is2004 = currentYear === "2004";
+  const is2026 = currentYear === "2026";
+
+  const timelineRootRef = useRef(null);
+  const glassBoxRef = useRef(null);
+  const bgMirrorRef = useRef(null);
+
+  // Background sampler: Continuously copy the slice of background canvas behind the timeline selector
+  // into the mirror canvas so LiquidGlass WebGL shader refracts the live background!
+  useEffect(() => {
+    if (!is2026) return;
+    let animId;
+    let isRunning = true;
+
+    const updateMirror = () => {
+      if (!isRunning) return;
+      const bgCanvas = document.getElementById("cyber-2026-canvas");
+      const mirrorCanvas = bgMirrorRef.current;
+      const timelineRoot = timelineRootRef.current;
+
+      if (bgCanvas && mirrorCanvas && timelineRoot) {
+        const rect = timelineRoot.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const pad = 20;
+
+        const targetW = Math.round((rect.width + pad * 2) * dpr);
+        const targetH = Math.round((rect.height + pad * 2) * dpr);
+
+        if (mirrorCanvas.width !== targetW || mirrorCanvas.height !== targetH) {
+          mirrorCanvas.width = targetW;
+          mirrorCanvas.height = targetH;
+        }
+
+        const ctx = mirrorCanvas.getContext("2d");
+        if (ctx) {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, targetW, targetH);
+
+          const sx = Math.round((rect.left - pad) * dpr);
+          const sy = Math.round((rect.top - pad) * dpr);
+          const sw = targetW;
+          const sh = targetH;
+
+          const clampSx = Math.max(0, sx);
+          const clampSy = Math.max(0, sy);
+          const clampSw = Math.min(sw, bgCanvas.width - clampSx);
+          const clampSh = Math.min(sh, bgCanvas.height - clampSy);
+          const dx = clampSx - sx;
+          const dy = clampSy - sy;
+
+          if (clampSw > 0 && clampSh > 0 && bgCanvas.width > 0 && bgCanvas.height > 0) {
+            ctx.drawImage(bgCanvas, clampSx, clampSy, clampSw, clampSh, dx, dy, clampSw, clampSh);
+          }
+        }
+      }
+
+      animId = requestAnimationFrame(updateMirror);
+    };
+
+    animId = requestAnimationFrame(updateMirror);
+
+    return () => {
+      isRunning = false;
+      cancelAnimationFrame(animId);
+    };
+  }, [is2026]);
+
+  // Initialize WebGL LiquidGlass shader effect for 2026 Timeline Selector
+  useEffect(() => {
+    if (!is2026) return;
+    let instance = null;
+    let isCancelled = false;
+
+    const initGlass = async () => {
+      // Let mirror canvas capture its first frame before compiling shaders
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      if (isCancelled || !timelineRootRef.current || !glassBoxRef.current) return;
+
+      try {
+        instance = await LiquidGlass.init({
+          root: timelineRootRef.current,
+          glassElements: [glassBoxRef.current],
+          defaults: {
+            blurAmount: 0,
+            refraction: 0.75,
+            chromAberration: 0.225,
+            edgeHighlight: 0,
+            specular: 0,
+            fresnel: 2,
+            distortion: 0,
+            cornerRadius: 40,
+            zRadius: 30,
+            opacity: 1,
+            saturation: 0,
+            brightness: 0,
+            shadowOpacity: 0.3,
+            shadowSpread: 10,
+            bevelMode: 0,
+          },
+        });
+
+        if (isCancelled && instance) {
+          instance.destroy();
+        }
+      } catch (err) {
+        console.error("Failed to init LiquidGlass on timeline selector:", err);
+      }
+    };
+
+    initGlass();
+
+    return () => {
+      isCancelled = true;
+      if (instance) {
+        instance.destroy();
+        instance = null;
+      }
+    };
+  }, [is2026]);
 
   return (
     <div
       aria-label="Temporal Timeline Selector"
       className="absolute top-10 sm:top-14 left-1/2 -translate-x-1/2 z-40 flex justify-center pointer-events-auto select-none transition-all duration-300"
     >
-      <div className="relative">
+      <div ref={timelineRootRef} className="relative flex items-center justify-center">
         {/* Cyber HUD Bracket in 2077 mode */}
         {is2077 && (
           <div className="cyber-bracket-top absolute -inset-y-2 sm:-inset-y-3 -inset-x-5 sm:-inset-x-10 bg-[#00f0ff]/15 border-t border-[#00f0ff]/30 border-b border-[#00f0ff]/40 -z-10 pointer-events-none transition-all duration-500" />
         )}
 
+        {/* 2026 Dynamic Background Mirror Canvas captured for LiquidGlass */}
+        {is2026 && (
+          <canvas
+            ref={bgMirrorRef}
+            data-dynamic
+            className="absolute pointer-events-none opacity-0 -z-20"
+            style={{
+              left: -20,
+              top: -20,
+              width: "calc(100% + 40px)",
+              height: "calc(100% + 40px)",
+            }}
+          />
+        )}
+
+        {/* 2026 Liquid Glass Shader Box Element */}
+        {is2026 && (
+          <div
+            ref={glassBoxRef}
+            data-dynamic
+            className="timeline-liquid-glass absolute inset-0 rounded-full pointer-events-none"
+            data-config={JSON.stringify({
+              blurAmount: 0,
+              refraction: 0.75,
+              chromAberration: 0.225,
+              edgeHighlight: 0,
+              specular: 0,
+              fresnel: 2,
+              distortion: 0,
+              cornerRadius: 40,
+              zRadius: 30,
+              opacity: 1,
+              saturation: 0,
+              brightness: 0,
+              shadowOpacity: 0.3,
+              shadowSpread: 10,
+              bevelMode: 0,
+            })}
+          />
+        )}
+
         <div
           className={clsx(
-            "flex items-center space-x-1.5 sm:space-x-4 px-2.5 sm:px-6 py-1 sm:py-2 rounded-full backdrop-blur-md transition-all duration-300",
+            "relative z-10 flex items-center space-x-1.5 sm:space-x-4 px-2.5 sm:px-6 py-1 sm:py-2 rounded-full transition-all duration-300",
             is2077
               ? "border border-[#00f0ff]/30 bg-[#021020]/30 shadow-[0_0_20px_rgba(0,240,255,0.15)] font-mono"
               : is2004
               ? "border-2 border-[#0055ea]/60 bg-gradient-to-b from-[#ffffff]/90 to-[#ece9d8]/90 shadow-md shadow-blue-900/20 font-sans"
-              : "border border-white/40 bg-white/15 shadow-md shadow-black/5 text-neutral-800"
+              : is2026
+              ? "!border-none !bg-transparent !shadow-none text-neutral-800 font-sans"
+              : "border border-white/40 bg-white/15 shadow-md shadow-black/5 text-neutral-800 font-sans"
           )}
         >
           {YEARS.map((year, idx) => {

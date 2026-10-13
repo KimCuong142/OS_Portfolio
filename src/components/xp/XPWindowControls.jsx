@@ -2,7 +2,6 @@ import useWindowStore from "#store/window";
 
 const WINDOW_META = {
   finder: { title: "My Computer", icon: "/xp/Icon/This Computer.png", showMenu: true },
-  safari: { title: "Internet Explorer - Articles", icon: "/xp/Icon/Internet Explorer.png", showMenu: true },
   photos: { title: "My Pictures", icon: "/xp/Icon/My Pictures.png", showMenu: true },
   contact: { title: "Outlook Express - Contact", icon: "/xp/Icon/Email.png", showMenu: true },
   terminal: { title: "Command Prompt - cmd.exe", icon: "/xp/Icon/Run.png", showMenu: false },

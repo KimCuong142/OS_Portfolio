@@ -66,23 +66,23 @@ const XPStartMenu = ({ isOpen, onClose }) => {
         {/* Left Column (White background, Programs) */}
         <div className="flex-1 min-w-[200px] p-1.5 flex flex-col justify-between bg-white border-r border-[#95bdee]">
           <div className="flex flex-col gap-0.5">
-            {/* Pinned 1: Internet Explorer */}
+            {/* Pinned 1: Command Prompt */}
             <button
               type="button"
-              onClick={() => handleItemClick("safari")}
+              onClick={() => handleItemClick("terminal")}
               className="group w-full flex items-center gap-2.5 px-1.5 py-1 rounded-[2px] cursor-pointer hover:bg-[#316ac5] text-left transition-colors focus:outline-none"
             >
               <img
-                src="/xp/Icon/Internet Explorer.png"
-                alt="Internet Explorer"
+                src="/xp/Icon/Run.png"
+                alt="Command Prompt"
                 className="w-8 h-8 object-contain flex-shrink-0"
               />
               <div className="flex flex-col min-w-0">
                 <span className="font-bold text-[11px] text-[#000000] group-hover:text-white leading-tight truncate">
-                  Internet
+                  Command Prompt
                 </span>
                 <span className="text-[10px] text-[#707070] group-hover:text-white/90 leading-tight truncate">
-                  Internet Explorer
+                  cmd.exe
                 </span>
               </div>
             </button>
@@ -127,19 +127,19 @@ const XPStartMenu = ({ isOpen, onClose }) => {
               </span>
             </button>
 
-            {/* MSN */}
+            {/* Resume / WordPad */}
             <button
               type="button"
-              onClick={() => handleItemClick("safari")}
+              onClick={() => handleItemClick("resume")}
               className="group w-full flex items-center gap-2 px-1.5 py-1 rounded-[2px] cursor-pointer hover:bg-[#316ac5] text-left transition-colors focus:outline-none"
             >
               <img
-                src="/xp/Icon/Microsoft News.png"
-                alt="MSN Explorer"
+                src="/xp/Icon/FileWord.png"
+                alt="Resume / WordPad"
                 className="w-7 h-7 object-contain flex-shrink-0"
               />
               <span className="font-medium text-[11px] text-[#000000] group-hover:text-white truncate">
-                MSN Explorer
+                WordPad (Resume)
               </span>
             </button>
 
@@ -355,7 +355,7 @@ const XPStartMenu = ({ isOpen, onClose }) => {
           {/* Help and Support */}
           <button
             type="button"
-            onClick={() => handleItemClick("safari")}
+            onClick={() => handleItemClick("contact")}
             className="group w-full flex items-center gap-2 px-1.5 py-1 rounded-[2px] cursor-pointer hover:bg-[#316ac5] text-left transition-colors focus:outline-none"
           >
             <img

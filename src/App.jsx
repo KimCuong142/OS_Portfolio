@@ -12,7 +12,6 @@ import {
 import {
   Finder,
   Resume,
-  Safari,
   Terminal,
   Text,
   Image,
@@ -57,7 +56,6 @@ const App = () => {
       {is2004 && <XPTaskbar />}
 
       <Terminal />
-      <Safari />
       <Resume />
       <Finder />
       <Text />

@@ -38,37 +38,31 @@ const navIcons = [
 const dockApps = [
   {
     id: "finder",
-    name: "Finder", // was "Finder"
+    name: "Finder",
     icon: "finder.png",
     canOpen: true,
   },
   {
-    id: "safari",
-    name: "Articles", // was "Safari"
-    icon: "safari.png",
-    canOpen: true,
-  },
-  {
     id: "photos",
-    name: "Gallery", // was "Photos"
+    name: "Gallery",
     icon: "photos.png",
     canOpen: true,
   },
   {
     id: "contact",
-    name: "Contact", // or "Get in touch"
+    name: "Contact",
     icon: "contact.png",
     canOpen: true,
   },
   {
     id: "terminal",
-    name: "Skills", // was "Terminal"
+    name: "Skills",
     icon: "terminal.png",
     canOpen: true,
   },
   {
     id: "trash",
-    name: "Archive", // was "Trash"
+    name: "Archive",
     icon: "trash.png",
     canOpen: false,
   },
@@ -81,35 +75,10 @@ const cyberKeys = [
   { label: "REEL", id: "photos" },
   { label: "OPS", id: "terminal" },
   { label: "MERIT", id: "resume" },
-  { label: "CODEX", id: "safari" },
   { label: "PORT", id: "finder" },
   { label: "UPLINK", id: "contact" },
 ];
 
-const blogPosts = [
-  {
-    id: 1,
-    date: "Sep 2, 2025",
-    title:
-      "TypeScript Explained: What It Is, Why It Matters, and How to Master It",
-    image: "/images/blog1.png",
-    link: "https://nodejs.org/en/learn/typescript/introduction",
-  },
-  {
-    id: 2,
-    date: "Aug 28, 2025",
-    title: "The Ultimate Guide to Mastering Three.js for 3D Development",
-    image: "/images/blog2.png",
-    link: "https://youtu.be/DEeaT6FxEws?si=DcmDVO0V28lOtFej",
-  },
-  {
-    id: 3,
-    date: "Aug 15, 2025",
-    title: "The Ultimate Guide to Mastering GSAP Animations",
-    image: "/images/blog3.png",
-    link: "https://jsmastery.com/blog/the-ultimate-guide-to-mastering-gsap-animations",
-  },
-];
 
 const techStack = [
   {
@@ -207,7 +176,6 @@ export {
   navIcons,
   dockApps,
   cyberKeys,
-  blogPosts,
   techStack,
   socials,
   photosLinks,
@@ -525,7 +493,6 @@ const WINDOW_CONFIG = {
   finder: { isOpen: false, isMinimized: false, isMaximized: false, zIndex: INITIAL_Z_INDEX, data: null },
   contact: { isOpen: false, isMinimized: false, isMaximized: false, zIndex: INITIAL_Z_INDEX, data: null },
   resume: { isOpen: false, isMinimized: false, isMaximized: false, zIndex: INITIAL_Z_INDEX, data: null },
-  safari: { isOpen: false, isMinimized: false, isMaximized: false, zIndex: INITIAL_Z_INDEX, data: null },
   photos: { isOpen: false, isMinimized: false, isMaximized: false, zIndex: INITIAL_Z_INDEX, data: null },
   terminal: { isOpen: false, isMinimized: false, isMaximized: false, zIndex: INITIAL_Z_INDEX, data: null },
   txtfile: { isOpen: false, isMinimized: false, isMaximized: false, zIndex: INITIAL_Z_INDEX, data: null },

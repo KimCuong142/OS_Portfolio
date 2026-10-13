@@ -188,49 +188,6 @@ body.theme-2004 {
     @apply flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 rounded-t-xl bg-[#f6f6f6] border-b border-gray-200 select-none text-xs sm:text-sm text-gray-500 cursor-default flex-none;
   }
 
-  #safari {
-    @apply w-4xl max-w-[calc(100vw-16px)] absolute top-16 sm:top-40 left-2 sm:left-2/12 bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[82vh];
-
-    .search {
-      @apply flex items-center gap-2 sm:gap-3 w-full sm:w-2/3 bg-white border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm;
-
-      input {
-        @apply placeholder:text-gray-400;
-      }
-    }
-
-    .blog {
-      @apply bg-white p-10 max-w-3xl mx-auto flex-1 overflow-y-auto w-full;
-
-      h2 {
-        @apply text-xl font-bold text-pink-600 mb-10;
-      }
-
-      .blog-post {
-        @apply grid grid-cols-12 space-x-5;
-
-        img {
-          @apply size-full rounded-md object-cover;
-        }
-
-        .content {
-          @apply col-span-10 space-y-3;
-
-          p {
-            @apply text-xs text-gray-500;
-          }
-
-          h3 {
-            @apply font-semibold text-base text-gray-800;
-          }
-
-          a {
-            @apply text-blue-600 text-xs hover:underline flex items-center gap-3;
-          }
-        }
-      }
-    }
-  }
 
   #terminal {
     @apply w-xl max-w-[calc(100vw-16px)] absolute top-16 sm:top-32 left-2 sm:left-1/12 bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[82vh];
@@ -602,7 +559,6 @@ body.theme-2004 {
   /* ========================================= */
   /* Windows XP 2004 Luna Theme Styling        */
   /* ========================================= */
-  body.theme-2004 #safari,
   body.theme-2004 #finder,
   body.theme-2004 #terminal,
   body.theme-2004 #contact,
@@ -635,19 +591,6 @@ body.theme-2004 {
     display: none !important;
   }
 
-  /* Internet Explorer Address Bar & Toolbar in 2004 */
-  body.theme-2004 #safari #window-header {
-    background: #ece9d8 !important;
-    border-bottom: 1px solid #dcdad1 !important;
-  }
-
-  body.theme-2004 #safari #window-header .search {
-    background: #ffffff !important;
-    border: 1px inset #7f9db9 !important;
-    border-radius: 2px !important;
-    height: 24px !important;
-    padding: 2px 8px !important;
-  }
 
   /* Command Prompt cmd.exe in 2004 */
   body.theme-2004 #terminal {

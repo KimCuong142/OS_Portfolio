@@ -39,7 +39,7 @@ const Home = () => {
 
     // Arranged in exact order: Column 1, Column 2, Column 3 with grid-flow-col grid-rows-3
     const xpDesktopItems = [
-      // Column 1
+      // Column 1: System
       {
         id: "xp-comp",
         name: "My Computer",
@@ -50,10 +50,13 @@ const Home = () => {
         },
       },
       {
-        id: "xp-ie",
-        name: "Internet Explorer",
-        icon: "/xp/Icon/Internet Explorer.png",
-        action: () => openWindow("safari"),
+        id: "xp-docs",
+        name: "My Documents",
+        icon: "/xp/Icon/My Documents.png",
+        action: () => {
+          setActiveLocation(locations.about);
+          openWindow("finder");
+        },
       },
       {
         id: "xp-trash",
@@ -65,15 +68,12 @@ const Home = () => {
         },
       },
 
-      // Column 2
+      // Column 2: Media & Projects
       {
-        id: "xp-docs",
-        name: "My Documents",
-        icon: "/xp/Icon/My Documents.png",
-        action: () => {
-          setActiveLocation(locations.about);
-          openWindow("finder");
-        },
+        id: "xp-pics",
+        name: "My Pictures",
+        icon: "/xp/Icon/My Pictures.png",
+        action: () => openWindow("photos"),
       },
       {
         id: "xp-koine",
@@ -82,19 +82,13 @@ const Home = () => {
         action: () => koineProject && handleOpenProjectFinder(koineProject),
       },
       {
-        id: "xp-pics",
-        name: "My Pictures",
-        icon: "/xp/Icon/My Pictures.png",
-        action: () => openWindow("photos"),
-      },
-
-      // Column 3
-      {
         id: "xp-happypaw",
         name: "Happy Paw Website",
         icon: "/xp/Icon/My Documents.png",
         action: () => happyPawProject && handleOpenProjectFinder(happyPawProject),
       },
+
+      // Column 3: Projects
       {
         id: "xp-hivision",
         name: "Hi-Vision Website",

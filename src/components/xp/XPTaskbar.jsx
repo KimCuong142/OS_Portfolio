@@ -5,7 +5,6 @@ import dayjs from "dayjs";
 
 const WINDOW_META = {
   finder: { title: "My Computer", icon: "/xp/Icon/This Computer.png" },
-  safari: { title: "Internet Explorer", icon: "/xp/Icon/Internet Explorer.png" },
   photos: { title: "My Pictures", icon: "/xp/Icon/My Pictures.png" },
   contact: { title: "Outlook Express", icon: "/xp/Icon/Email.png" },
   terminal: { title: "Command Prompt", icon: "/xp/Icon/Run.png" },
@@ -124,18 +123,6 @@ const XPTaskbar = () => {
                 <div className="w-3.5 h-3.5 border border-white/80 bg-[#1e52cf]/60 rounded-[1px] flex items-end justify-center pb-0.5">
                   <span className="w-2 h-1 bg-white/70" />
                 </div>
-              </button>
-              <button
-                type="button"
-                title="Internet Explorer"
-                onClick={() => openWindow("safari")}
-                className="p-1 hover:bg-[#1a44a6] rounded-sm cursor-pointer transition-colors"
-              >
-                <img
-                  src="/xp/Icon/Internet Explorer.png"
-                  alt="IE"
-                  className="w-3.5 h-3.5 object-contain"
-                />
               </button>
               <button
                 type="button"

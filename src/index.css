@@ -819,8 +819,18 @@ body.theme-2004 {
     font-family: "Share Tech Mono", monospace !important;
   }
 
+  body.theme-2077 #contact .contact-label {
+    color: #00f0ff !important;
+    font-family: "Orbitron", sans-serif !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.05em !important;
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.4) !important;
+  }
+
   body.theme-2077 #contact a.email-link,
-  body.theme-2077 #contact a[href^="mailto:"] {
+  body.theme-2077 #contact a.phone-link,
+  body.theme-2077 #contact a[href^="mailto:"],
+  body.theme-2077 #contact a[href^="tel:"] {
     color: #00f0ff !important;
     text-shadow: 0 0 8px rgba(0, 240, 255, 0.5) !important;
     font-family: "Share Tech Mono", monospace !important;
@@ -829,7 +839,9 @@ body.theme-2004 {
   }
 
   body.theme-2077 #contact a.email-link:hover,
-  body.theme-2077 #contact a[href^="mailto:"]:hover {
+  body.theme-2077 #contact a.phone-link:hover,
+  body.theme-2077 #contact a[href^="mailto:"]:hover,
+  body.theme-2077 #contact a[href^="tel:"]:hover {
     color: #7df9ff !important;
     text-shadow: 0 0 14px #00f0ff !important;
   }

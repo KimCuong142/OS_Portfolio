@@ -17,6 +17,77 @@ const WindowWrapper = (Component, windowkey) => {
     const prevOpenRef = useRef(false);
     const prevMinimizedRef = useRef(false);
 
+    // Synchronously elevate window to top on any touch/click/drag
+    const handleFocus = () => {
+      focusWindow(windowkey);
+      if (ref.current) {
+        const nextZ = useWindowStore.getState().nextZIndex;
+        ref.current.style.zIndex = String(nextZ + 1);
+      }
+    };
+
+    // Keep DOM element zIndex synced with store zIndex
+    useEffect(() => {
+      if (ref.current) {
+        ref.current.style.zIndex = String(zIndex);
+      }
+    }, [zIndex]);
+
+    // Center window in viewport
+    const centerWindow = () => {
+      const el = ref.current;
+      if (!el) return;
+
+      const isMobile = window.innerWidth < 640;
+      if (isMobile) {
+        el.style.left = "8px";
+        el.style.top = "44px";
+        gsap.set(el, { x: 0, y: 0 });
+        if (draggableInstanceRef.current) {
+          draggableInstanceRef.current.update();
+        }
+        return;
+      }
+
+      const elWidth = el.offsetWidth || 620;
+      const elHeight = el.offsetHeight || 420;
+
+      const centerX = Math.max(16, Math.round((window.innerWidth - elWidth) / 2));
+      const availableHeight = window.innerHeight - 36 - 72;
+      const centerY = Math.max(
+        44,
+        Math.round(36 + Math.max(0, (availableHeight - elHeight) / 2))
+      );
+
+      el.style.left = `${centerX}px`;
+      el.style.top = `${centerY}px`;
+      gsap.set(el, { x: 0, y: 0 });
+
+      if (draggableInstanceRef.current) {
+        draggableInstanceRef.current.update();
+      }
+    };
+
+    // Capture-phase listener: bring window to front even if child stops event propagation
+    useEffect(() => {
+      const el = ref.current;
+      if (!el) return;
+
+      const onPointerDownCapture = () => {
+        handleFocus();
+      };
+
+      el.addEventListener("pointerdown", onPointerDownCapture, true);
+      el.addEventListener("touchstart", onPointerDownCapture, true);
+      el.addEventListener("mousedown", onPointerDownCapture, true);
+
+      return () => {
+        el.removeEventListener("pointerdown", onPointerDownCapture, true);
+        el.removeEventListener("touchstart", onPointerDownCapture, true);
+        el.removeEventListener("mousedown", onPointerDownCapture, true);
+      };
+    }, [windowkey]);
+
     // GSAP Draggable Setup
     useGSAP(() => {
       const el = ref.current;
@@ -28,7 +99,16 @@ const WindowWrapper = (Component, windowkey) => {
       }
 
       const [instance] = Draggable.create(el, {
-        onPress: () => focusWindow(windowkey),
+        zIndexBoost: false, // Prevents GSAP from reverting zIndex to old value after dragging
+        onPress: handleFocus,
+        onDragStart: () => {
+          handleFocus();
+          el.style.transition = "none";
+        },
+        onDrag: handleFocus,
+        onDragEnd: () => {
+          el.style.transition = "";
+        },
         edgeResistance: 0.7,
         type: "x,y",
         bounds: "main",
@@ -51,21 +131,32 @@ const WindowWrapper = (Component, windowkey) => {
       }
     }, [isMaximized]);
 
-    // Handle Open Animation
+    // Handle Open Animation & Centering
     useEffect(() => {
       const el = ref.current;
       if (!el) return;
 
       if (isOpen && !prevOpenRef.current && !isMinimized) {
         el.style.display = "flex";
-        if (window.innerWidth < 640) {
-          gsap.set(el, { x: 0 });
-        }
+        handleFocus();
+        centerWindow();
+
         gsap.fromTo(
           el,
-          { scale: 0.85, opacity: 0, y: 30 },
+          { scale: 0.85, opacity: 0, y: 20 },
           { scale: 1, opacity: 1, y: 0, duration: 0.25, ease: "power3.out" }
         );
+
+        // Re-check after browser paints content
+        requestAnimationFrame(() => {
+          if (
+            draggableInstanceRef.current &&
+            draggableInstanceRef.current.x === 0 &&
+            draggableInstanceRef.current.y === 0
+          ) {
+            centerWindow();
+          }
+        });
       }
       prevOpenRef.current = isOpen;
     }, [isOpen, isMinimized]);
@@ -90,6 +181,7 @@ const WindowWrapper = (Component, windowkey) => {
       } else if (!isMinimized && prevMinimizedRef.current) {
         // Restoring window from dock
         el.style.display = "flex";
+        handleFocus();
         gsap.fromTo(
           el,
           { scale: 0.2, y: 400, opacity: 0 },
@@ -112,7 +204,11 @@ const WindowWrapper = (Component, windowkey) => {
 
     // Double click header to toggle maximize (like real macOS)
     const handleDoubleClick = (e) => {
-      if (e.target.closest("#window-controls") || e.target.closest("button") || e.target.closest("input")) {
+      if (
+        e.target.closest("#window-controls") ||
+        e.target.closest("button") ||
+        e.target.closest("input")
+      ) {
         return;
       }
       if (e.target.closest("#window-header")) {
@@ -125,9 +221,11 @@ const WindowWrapper = (Component, windowkey) => {
         id={windowkey}
         ref={ref}
         style={{ zIndex }}
-        onMouseDown={() => focusWindow(windowkey)}
+        onPointerDown={handleFocus}
+        onMouseDown={handleFocus}
+        onTouchStart={handleFocus}
         onDoubleClick={handleDoubleClick}
-        className={`absolute flex flex-col transition-all duration-300 ease-out ${
+        className={`absolute flex flex-col transition-[width,height,top,left,right,bottom,border-radius,box-shadow] duration-300 ease-out ${
           isMaximized ? "window-maximized" : ""
         }`}
       >

@@ -181,7 +181,6 @@ body.theme-2004 {
     transform: translate3d(0px, 0px, 0px) !important;
     border-radius: 12px !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
-    z-index: 40;
   }
 
   #window-header {
@@ -190,7 +189,7 @@ body.theme-2004 {
 
 
   #terminal {
-    @apply w-xl max-w-[calc(100vw-16px)] absolute top-16 sm:top-32 left-2 sm:left-1/12 bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[82vh];
+    @apply w-xl max-w-[calc(100vw-16px)] absolute bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[82vh];
 
     h2 {
       @apply font-bold text-xs sm:text-sm text-center w-full;
@@ -244,7 +243,7 @@ body.theme-2004 {
   }
 
   #contact {
-    @apply max-w-2xl w-[calc(100vw-16px)] sm:w-auto absolute top-16 sm:top-60 left-2 sm:left-5/12 bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[82vh];
+    @apply max-w-2xl w-[calc(100vw-16px)] sm:w-auto absolute bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[82vh];
 
     h2 {
       @apply font-bold text-xs sm:text-sm text-center w-full;
@@ -272,7 +271,7 @@ body.theme-2004 {
   }
 
   #photos {
-    @apply max-w-3xl w-[calc(100vw-16px)] sm:w-auto absolute top-16 sm:top-96 left-2 sm:left-1/2 sm:-translate-y-1/2 bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[85vh];
+    @apply max-w-3xl w-[calc(100vw-16px)] sm:w-auto absolute bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[85vh];
 
     .sidebar {
       @apply w-full sm:w-48 flex-none bg-gray-50 border-b sm:border-b-0 sm:border-r border-gray-200 flex flex-row sm:flex-col p-2 sm:p-5 overflow-x-auto sm:overflow-y-auto;
@@ -336,7 +335,7 @@ body.theme-2004 {
   }
 
   #resume {
-    @apply w-[calc(100vw-16px)] sm:w-fit h-fit max-h-[85vh] absolute top-14 sm:top-16 left-2 sm:left-7/12 bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col;
+    @apply w-[calc(100vw-16px)] sm:w-fit h-fit max-h-[85vh] absolute bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col;
 
     #window-header {
       h2 {
@@ -346,7 +345,7 @@ body.theme-2004 {
   }
 
   #finder {
-    @apply absolute w-3xl max-w-[calc(100vw-16px)] left-2 sm:left-40 top-16 sm:top-20 bg-white shadow-2xl drop-shadow-2xl overflow-hidden rounded-xl flex flex-col max-h-[82vh];
+    @apply absolute w-3xl max-w-[calc(100vw-16px)] bg-white shadow-2xl drop-shadow-2xl overflow-hidden rounded-xl flex flex-col max-h-[82vh];
 
     #window-header {
       @apply bg-[#f6f6f6] border-b border-gray-200;
@@ -417,7 +416,7 @@ body.theme-2004 {
   }
 
   #txtfile {
-    @apply w-md max-w-[calc(100vw-16px)] absolute top-16 sm:top-36 left-2 sm:left-auto sm:right-32 bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[82vh];
+    @apply w-md max-w-[calc(100vw-16px)] absolute bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[82vh];
 
     h2 {
       @apply font-bold text-xs sm:text-sm text-center w-full;
@@ -425,7 +424,7 @@ body.theme-2004 {
   }
 
   #imgfile {
-    @apply w-xl max-w-[calc(100vw-16px)] absolute top-16 sm:top-40 left-2 sm:left-2/12 bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[82vh];
+    @apply w-xl max-w-[calc(100vw-16px)] absolute bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[82vh];
 
     #window-header {
       p {

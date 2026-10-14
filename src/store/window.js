@@ -20,7 +20,7 @@ const useWindowStore = create((set) => ({
           maxZ = state.windows[k].zIndex;
         }
       }
-      const newZ = Math.max(state.nextZIndex, maxZ + 1);
+      const newZ = Math.max(state.nextZIndex + 2, maxZ + 2);
       return {
         windows: {
           ...state.windows,

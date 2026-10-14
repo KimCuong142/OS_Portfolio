@@ -12,9 +12,10 @@ const projects = locations.work.children ?? [];
 const Home = () => {
   const { setActiveLocation } = useLocationStore();
   const { openWindow } = useWindowStore();
-  const { currentYear } = useThemeStore();
+  const { currentYear, mode2026 } = useThemeStore();
   const is2077 = currentYear === "2077";
   const is2004 = currentYear === "2004";
+  const isDark2026 = currentYear === "2026" && mode2026 === "dark";
 
   const handleOpenProjectFinder = (project) => {
     setActiveLocation(project);
@@ -32,7 +33,9 @@ const Home = () => {
   if (is2077) return null;
 
   if (is2004) {
-    const koineProject = projects.find((p) => p.name === "KoiNe") || projects[3];
+    const bidKoiProject =
+      projects.find((p) => p.name === "BidKoi" || p.name.includes("BidKoi")) ||
+      projects[3];
     const happyPawProject = projects.find((p) => p.name === "Happy Paw Website") || projects[1];
     const hiVisionProject = projects.find((p) => p.name === "Hi-Vision Website") || projects[0];
     const resqProject = projects.find((p) => p.name === "ResQ Mien Trung") || projects[2];
@@ -76,10 +79,10 @@ const Home = () => {
         action: () => openWindow("photos"),
       },
       {
-        id: "xp-koine",
-        name: "KoiNe",
+        id: "xp-bidkoi",
+        name: "BidKoi",
         icon: "/xp/Icon/My Documents.png",
-        action: () => koineProject && handleOpenProjectFinder(koineProject),
+        action: () => bidKoiProject && handleOpenProjectFinder(bidKoiProject),
       },
       {
         id: "xp-happypaw",
@@ -131,13 +134,13 @@ const Home = () => {
   }
 
   return (
-    <section id="home">
+    <section id="home" className="pointer-events-none">
       <ul>
         {projects.map((project) => (
           <li
             key={project.id}
             className={clsx(
-              "group folder cursor-pointer w-28 flex flex-col items-center",
+              "group folder cursor-pointer w-28 flex flex-col items-center pointer-events-auto",
               project.windowPosition
             )}
             onClick={() => handleOpenProjectFinder(project)}
@@ -155,6 +158,8 @@ const Home = () => {
                 "text-xs text-center px-1.5 py-0.5 mt-1 max-w-36 transition-all select-none",
                 is2077
                   ? "text-[#00f0ff] font-mono bg-[#021020]/80 border border-[#00f0ff]/30 group-hover:bg-[#00f0ff] group-hover:text-black group-hover:border-[#00f0ff]"
+                  : isDark2026
+                  ? "text-white font-sans font-medium [text-shadow:0_1px_4px_rgba(0,0,0,0.85)] group-hover:text-white"
                   : "text-neutral-800 font-sans font-medium [text-shadow:0_1px_2px_rgba(0,0,0,0.15)] group-hover:text-neutral-950"
               )}
             >

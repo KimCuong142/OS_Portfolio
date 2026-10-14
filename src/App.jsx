@@ -26,20 +26,27 @@ import clsx from "clsx";
 gsap.registerPlugin(Draggable);
 
 const App = () => {
-  const { currentYear } = useThemeStore();
+  const { currentYear, mode2026 } = useThemeStore();
   const is2077 = currentYear === "2077";
   const is2004 = currentYear === "2004";
 
   useEffect(() => {
-    document.body.classList.remove("theme-2077", "theme-2026", "theme-2004");
+    document.body.classList.remove(
+      "theme-2077",
+      "theme-2026",
+      "theme-2004",
+      "mode-dark",
+      "mode-light"
+    );
     if (is2077) {
       document.body.classList.add("theme-2077");
     } else if (is2004) {
       document.body.classList.add("theme-2004");
     } else {
       document.body.classList.add("theme-2026");
+      document.body.classList.add(mode2026 === "dark" ? "mode-dark" : "mode-light");
     }
-  }, [is2077, is2004]);
+  }, [is2077, is2004, mode2026]);
 
   // Auto-request Fullscreen on the very first direct user gesture (click / tap)
   useEffect(() => {

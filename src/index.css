@@ -376,17 +376,17 @@ body.theme-2004 {
     }
 
     .content {
-      @apply flex-1 p-3 sm:p-8 bg-white max-w-none relative overflow-y-auto min-h-[250px] sm:min-h-[350px] max-sm:flex max-sm:flex-wrap max-sm:gap-3;
+      @apply flex-1 p-5 sm:p-7 bg-white max-w-none overflow-y-auto min-h-[250px] sm:min-h-[350px] flex flex-wrap gap-x-5 sm:gap-x-7 gap-y-6 sm:gap-y-8 content-start items-start select-none;
 
       li {
-        @apply absolute max-sm:!relative max-sm:!top-auto max-sm:!left-auto max-sm:!right-auto flex items-center flex-col gap-2 sm:gap-3 cursor-pointer;
+        @apply relative !top-auto !left-auto !right-auto !bottom-auto flex items-center flex-col gap-2 p-2 rounded-xl cursor-pointer transition-all duration-150 hover:bg-black/[0.05] active:bg-blue-500/15 w-24 sm:w-28 flex-shrink-0;
 
         img {
-          @apply object-contain object-center size-12 sm:size-16 relative group-hover:scale-105;
+          @apply object-contain object-center size-12 sm:size-14 relative group-hover:scale-105 transition-transform duration-150 drop-shadow-sm select-none;
         }
 
         p {
-          @apply text-xs sm:text-sm text-center font-medium w-24 sm:w-40 truncate sm:whitespace-normal;
+          @apply text-xs sm:text-[13px] text-center font-medium text-neutral-800 leading-snug break-words line-clamp-2 w-full px-1 select-none;
         }
       }
     }
@@ -915,6 +915,10 @@ body.theme-2004 {
   body.theme-2077 #finder .content li p {
     color: #e0f7fa !important;
     text-shadow: 0 0 6px rgba(0, 240, 255, 0.35) !important;
+  }
+
+  body.theme-2077 #finder .content li:hover {
+    background: rgba(0, 240, 255, 0.08) !important;
   }
 
   body.theme-2077 #finder .content li:hover img {

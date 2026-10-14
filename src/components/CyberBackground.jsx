@@ -5,10 +5,15 @@ import useThemeStore from "#store/theme";
 
 const CyberBackground = () => {
   const canvasRef = useRef(null);
-  const { currentYear } = useThemeStore();
+  const { currentYear, mode2026 } = useThemeStore();
   const is2077 = currentYear === "2077";
   const is2004 = currentYear === "2004";
   const is2026 = currentYear === "2026";
+  const mode2026Ref = useRef(mode2026);
+
+  useEffect(() => {
+    mode2026Ref.current = mode2026;
+  }, [mode2026]);
 
   // 2026 Kinetic Accordion Typography Engine (Cached & Optimized)
   useEffect(() => {
@@ -124,7 +129,9 @@ const CyberBackground = () => {
       if (Math.abs(mouse.targetY - mouse.y) < 0.2) mouse.y = mouse.targetY;
 
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "#ffffff";
+
+      const isDark = mode2026Ref.current === "dark";
+      ctx.fillStyle = isDark ? "#090d16" : "#ffffff";
       ctx.fillRect(0, 0, width, height);
 
       const isPortrait = height > width * 0.95;
@@ -147,6 +154,7 @@ const CyberBackground = () => {
 
       const mouseRow = Math.floor((mouse.y - offsetY) / rowHeight);
       const isMouseActive = mouse.targetX >= 0 && mouse.targetY >= 0;
+      const charGap = 1;
       const availableWidth = width - 4;
       const startX = 2;
 
@@ -155,16 +163,19 @@ const CyberBackground = () => {
         const numChars = chars.length;
         const rowCenterY = offsetY + (lineIdx + 0.5) * rowHeight;
 
-        // Base widths calculated using precomputed ink metrics (touching with 0 gap)
+        const totalGaps = (numChars - 1) * charGap;
+        const lineAvailableWidth = Math.max(10, availableWidth - totalGaps);
+
+        // Base widths calculated using precomputed ink metrics
         const baseWidths = metrics.map(
-          (m) => (m.inkW / totalBaseInkW) * availableWidth
+          (m) => (m.inkW / totalBaseInkW) * lineAvailableWidth
         );
 
         const baseCenters = new Float32Array(numChars);
         let accX = startX;
         for (let c = 0; c < numChars; c++) {
           baseCenters[c] = accX + baseWidths[c] / 2;
-          accX += baseWidths[c];
+          accX += baseWidths[c] + charGap;
         }
 
         const isCurrentRow = isMouseActive && lineIdx === mouseRow;
@@ -174,8 +185,12 @@ const CyberBackground = () => {
           if (isCurrentRow) {
             const center = baseCenters[cIdx];
             const dist = Math.abs(mouse.x - center);
-            const distLeft = cIdx > 0 ? center - baseCenters[cIdx - 1] : baseWidths[cIdx];
-            const distRight = cIdx < numChars - 1 ? baseCenters[cIdx + 1] - center : baseWidths[cIdx];
+            const distLeft =
+              cIdx > 0 ? center - baseCenters[cIdx - 1] : baseWidths[cIdx];
+            const distRight =
+              cIdx < numChars - 1
+                ? baseCenters[cIdx + 1] - center
+                : baseWidths[cIdx];
             const radius = (mouse.x < center ? distLeft : distRight) * 1.15;
 
             if (dist < radius) {
@@ -193,14 +208,14 @@ const CyberBackground = () => {
         const currentExp = expansionState[lineIdx];
 
         const deltaDemanded = baseWidths.map((baseW, cIdx) => {
-          const denom = Math.max(0.1, 1 - baseW / availableWidth);
+          const denom = Math.max(0.1, 1 - baseW / lineAvailableWidth);
           return (0.5 * baseW * currentExp[cIdx]) / denom;
         });
 
         const totalExtra = deltaDemanded.reduce((sum, d) => sum + d, 0);
 
         const finalWidths = baseWidths.map((baseW, cIdx) => {
-          return baseW + deltaDemanded[cIdx] - (baseW / availableWidth) * totalExtra;
+          return baseW + deltaDemanded[cIdx] - (baseW / lineAvailableWidth) * totalExtra;
         });
 
         let currX = startX;
@@ -214,19 +229,37 @@ const CyberBackground = () => {
           const scaleX = slotW / m.inkW;
           const expVal = currentExp[cIdx];
 
-          const rCol = Math.round(200 - expVal * (200 - 15));
-          const gCol = Math.round(212 - expVal * (212 - 23));
-          const bCol = Math.round(228 - expVal * (228 - 42));
-
           ctx.save();
           ctx.translate(currX, rowCenterY);
           ctx.scale(scaleX, 1);
 
-          ctx.fillStyle = `rgb(${rCol}, ${gCol}, ${bCol})`;
+          if (isDark) {
+            // Dark mode: soft watermark -> glowing crisp white on hover
+            const r = Math.round(30 + expVal * (255 - 30));
+            const g = Math.round(41 + expVal * (255 - 41));
+            const b = Math.round(59 + expVal * (255 - 59));
+            const alpha = 0.25 + expVal * 0.75;
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            if (expVal > 0.05) {
+              ctx.shadowColor = `rgba(0, 240, 255, ${expVal * 0.4})`;
+              ctx.shadowBlur = expVal * 12;
+            }
+          } else {
+            // Light mode: soft slate watermark -> deep obsidian bold on hover (original "như cũ")
+            const rCol = Math.round(200 - expVal * (200 - 15));
+            const gCol = Math.round(212 - expVal * (212 - 23));
+            const bCol = Math.round(228 - expVal * (228 - 42));
+            ctx.fillStyle = `rgb(${rCol}, ${gCol}, ${bCol})`;
+            if (expVal > 0.05) {
+              ctx.shadowColor = `rgba(15, 23, 42, ${expVal * 0.15})`;
+              ctx.shadowBlur = expVal * 10;
+            }
+          }
+
           ctx.fillText(char, m.left, 0);
           ctx.restore();
 
-          currX += slotW;
+          currX += slotW + charGap;
         }
       });
     };

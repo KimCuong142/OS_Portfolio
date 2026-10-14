@@ -15,14 +15,12 @@ const Image = () => {
         <h2>{data.name}</h2>
       </div>
 
-      <div className="image-file-content flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center bg-gray-50">
-        <h1 className="image-file-title">{data.title}</h1>
-
+      <div className="image-file-content preview flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center bg-gray-50">
         {data.imageUrl && (
           <img
             src={data.imageUrl}
-            alt={data.title}
-            className="image-file-image"
+            alt={data.name}
+            className="image-file-image max-h-[65vh] w-auto max-w-full object-contain rounded-lg shadow-sm"
             loading="lazy"
           />
         )}

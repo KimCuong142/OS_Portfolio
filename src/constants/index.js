@@ -359,22 +359,38 @@ const WORK_LOCATION = {
     // ▶ Project 5
     {
       id: 8,
-      name: "KoiNe",
+      name: "BidKoi",
       icon: "/images/folder.png",
       kind: "folder",
-      position: "top-10 left-40",
       windowPosition: "top-[24.5rem] right-6",
       children: [
         {
           id: 1,
-          name: "KoiNe Project.txt",
+          name: "BidKoi Project.txt",
           icon: "/images/txt.png",
           kind: "file",
           fileType: "txt",
-          position: "top-5 left-10",
+          subtitle: "BidKoi – Real-Time Online Koi Fish Auction Platform",
           description: [
-            "Developing a web-app to manage Koi fish veterinary services, including bookings, doctor assignments, customer profiles, feedback, and reporting",
+            "09/2024 - 11/2024",
+            "BidKoi is a web platform connecting Koi breeders and buyers through dynamic online auctions. The system enables participants to track live bids, place bids, and receive instant result updates within dedicated auction rooms, featuring real-time countdown timers, \"Buy Now\" capabilities, and live chat functionality.",
           ],
+        },
+        {
+          id: 2,
+          name: "bid-koi.vercel.app",
+          icon: "/images/safari.png",
+          kind: "file",
+          fileType: "url",
+          href: "https://bid-koi.vercel.app/",
+        },
+        {
+          id: 3,
+          name: "BidKoi.png",
+          icon: "/images/image.png",
+          kind: "file",
+          fileType: "img",
+          imageUrl: "/images/BidKoi.png",
         },
       ],
     },

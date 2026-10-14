@@ -1,129 +1,127 @@
 import { useRef, useEffect } from "react";
+import { LiquidGlass } from "@ybouane/liquidglass";
 import useThemeStore from "#store/theme";
 import clsx from "clsx";
-import { LiquidGlass } from "@ybouane/liquidglass";
 
 const YEARS = ["2004", "2026", "2077"];
+const SHADOW_PAD = 20;
 
 const TimelineSelector = () => {
-  const { currentYear, setYear } = useThemeStore();
+  const { currentYear, setYear, mode2026 } = useThemeStore();
   const is2077 = currentYear === "2077";
   const is2004 = currentYear === "2004";
   const is2026 = currentYear === "2026";
+  const isDark2026 = is2026 && mode2026 === "dark";
 
   const timelineRootRef = useRef(null);
   const glassBoxRef = useRef(null);
   const bgMirrorRef = useRef(null);
 
-  // Background sampler: Continuously copy the slice of background canvas behind the timeline selector
-  // into the mirror canvas so LiquidGlass WebGL shader refracts the live background!
   useEffect(() => {
     if (!is2026) return;
-    let animId;
-    let isRunning = true;
 
-    const updateMirror = () => {
-      if (!isRunning) return;
-      const bgCanvas = document.getElementById("cyber-2026-canvas");
-      const mirrorCanvas = bgMirrorRef.current;
-      const timelineRoot = timelineRootRef.current;
+    let liquidInstance = null;
+    let isDestroyed = false;
+    let rafId = null;
+    let attempts = 0;
 
-      if (bgCanvas && mirrorCanvas && timelineRoot) {
-        const rect = timelineRoot.getBoundingClientRect();
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const pad = 20;
-
-        const targetW = Math.round((rect.width + pad * 2) * dpr);
-        const targetH = Math.round((rect.height + pad * 2) * dpr);
-
-        if (mirrorCanvas.width !== targetW || mirrorCanvas.height !== targetH) {
-          mirrorCanvas.width = targetW;
-          mirrorCanvas.height = targetH;
+    const initLG = async () => {
+      if (
+        !timelineRootRef.current ||
+        !glassBoxRef.current ||
+        glassBoxRef.current.offsetWidth === 0
+      ) {
+        if (attempts < 20 && !isDestroyed) {
+          attempts++;
+          rafId = requestAnimationFrame(initLG);
         }
-
-        const ctx = mirrorCanvas.getContext("2d");
-        if (ctx) {
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, targetW, targetH);
-
-          const sx = Math.round((rect.left - pad) * dpr);
-          const sy = Math.round((rect.top - pad) * dpr);
-          const sw = targetW;
-          const sh = targetH;
-
-          const clampSx = Math.max(0, sx);
-          const clampSy = Math.max(0, sy);
-          const clampSw = Math.min(sw, bgCanvas.width - clampSx);
-          const clampSh = Math.min(sh, bgCanvas.height - clampSy);
-          const dx = clampSx - sx;
-          const dy = clampSy - sy;
-
-          if (clampSw > 0 && clampSh > 0 && bgCanvas.width > 0 && bgCanvas.height > 0) {
-            ctx.drawImage(bgCanvas, clampSx, clampSy, clampSw, clampSh, dx, dy, clampSw, clampSh);
-          }
-        }
+        return;
       }
 
-      animId = requestAnimationFrame(updateMirror);
-    };
-
-    animId = requestAnimationFrame(updateMirror);
-
-    return () => {
-      isRunning = false;
-      cancelAnimationFrame(animId);
-    };
-  }, [is2026]);
-
-  // Initialize WebGL LiquidGlass shader effect for 2026 Timeline Selector
-  useEffect(() => {
-    if (!is2026) return;
-    let instance = null;
-    let isCancelled = false;
-
-    const initGlass = async () => {
-      // Let mirror canvas capture its first frame before compiling shaders
-      await new Promise((resolve) => setTimeout(resolve, 60));
-      if (isCancelled || !timelineRootRef.current || !glassBoxRef.current) return;
-
       try {
-        instance = await LiquidGlass.init({
+        liquidInstance = await LiquidGlass.init({
           root: timelineRootRef.current,
           glassElements: [glassBoxRef.current],
           defaults: {
             blurAmount: 0,
-            refraction: 0.75,
-            chromAberration: 0.225,
+            refraction: 1.5,
+            chromAberration: 0.3,
             edgeHighlight: 0,
             specular: 0,
-            fresnel: 2,
-            distortion: 0,
+            fresnel: 1,
+            distortion: 0.15,
             cornerRadius: 40,
             zRadius: 30,
             opacity: 1,
-            saturation: 0,
+            saturation: 0.05,
             brightness: 0,
             shadowOpacity: 0.3,
             shadowSpread: 10,
             bevelMode: 0,
           },
         });
-
-        if (isCancelled && instance) {
-          instance.destroy();
+        if (isDestroyed && liquidInstance) {
+          liquidInstance.destroy();
         }
       } catch (err) {
-        console.error("Failed to init LiquidGlass on timeline selector:", err);
+        console.error("LiquidGlass init error (TimelineSelector):", err);
       }
     };
 
-    initGlass();
+    rafId = requestAnimationFrame(initLG);
+
+    const updateMirror = () => {
+      if (isDestroyed) return;
+      const mirror = bgMirrorRef.current;
+      const root = timelineRootRef.current;
+
+      if (mirror && root) {
+        const rootRect = root.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const targetW = Math.round((rootRect.width + SHADOW_PAD * 2) * dpr);
+        const targetH = Math.round((rootRect.height + SHADOW_PAD * 2) * dpr);
+
+        if (mirror.width !== targetW || mirror.height !== targetH) {
+          mirror.width = targetW;
+          mirror.height = targetH;
+        }
+
+        const ctx = mirror.getContext("2d");
+        if (ctx) {
+          ctx.clearRect(0, 0, targetW, targetH);
+
+          const mirrorViewportX = rootRect.left - SHADOW_PAD;
+          const mirrorViewportY = rootRect.top - SHADOW_PAD;
+          const mirrorViewportW = rootRect.width + SHADOW_PAD * 2;
+          const mirrorViewportH = rootRect.height + SHADOW_PAD * 2;
+
+          // 1. Draw cyber canvas background slice
+          const cyberCanvas = document.getElementById("cyber-2026-canvas");
+          if (cyberCanvas && cyberCanvas.width > 0 && cyberCanvas.height > 0) {
+            const scaleX = cyberCanvas.width / window.innerWidth;
+            const scaleY = cyberCanvas.height / window.innerHeight;
+            const sx = mirrorViewportX * scaleX;
+            const sy = mirrorViewportY * scaleY;
+            const sw = mirrorViewportW * scaleX;
+            const sh = mirrorViewportH * scaleY;
+            ctx.drawImage(cyberCanvas, sx, sy, sw, sh, 0, 0, targetW, targetH);
+          } else {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, targetW, targetH);
+          }
+        }
+      }
+
+      rafId = requestAnimationFrame(updateMirror);
+    };
+
+    rafId = requestAnimationFrame(updateMirror);
 
     return () => {
-      isCancelled = true;
-      if (instance) {
-        instance.destroy();
-        instance = null;
+      isDestroyed = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      if (liquidInstance) {
+        liquidInstance.destroy();
       }
     };
   }, [is2026]);
@@ -133,50 +131,38 @@ const TimelineSelector = () => {
       aria-label="Temporal Timeline Selector"
       className="absolute top-10 sm:top-14 left-1/2 -translate-x-1/2 z-40 flex justify-center pointer-events-auto select-none transition-all duration-300"
     >
-      <div ref={timelineRootRef} className="relative flex items-center justify-center">
+      <div
+        ref={timelineRootRef}
+        className="relative flex items-center justify-center overflow-visible"
+      >
         {/* Cyber HUD Bracket in 2077 mode */}
         {is2077 && (
           <div className="cyber-bracket-top absolute -inset-y-2 sm:-inset-y-3 -inset-x-5 sm:-inset-x-10 bg-[#00f0ff]/15 border-t border-[#00f0ff]/30 border-b border-[#00f0ff]/40 -z-10 pointer-events-none transition-all duration-500" />
         )}
 
-        {/* 2026 Dynamic Background Mirror Canvas captured for LiquidGlass */}
+        {/* 2026 LiquidGlass Mirror Canvas (direct child before glass element) */}
         {is2026 && (
           <canvas
             ref={bgMirrorRef}
             data-dynamic
-            className="absolute pointer-events-none opacity-0 -z-20"
+            className="absolute pointer-events-none opacity-0"
             style={{
-              left: -20,
-              top: -20,
-              width: "calc(100% + 40px)",
-              height: "calc(100% + 40px)",
+              left: -SHADOW_PAD,
+              top: -SHADOW_PAD,
+              width: `calc(100% + ${SHADOW_PAD * 2}px)`,
+              height: `calc(100% + ${SHADOW_PAD * 2}px)`,
+              zIndex: -10,
+              opacity: 0,
             }}
           />
         )}
 
-        {/* 2026 Liquid Glass Shader Box Element */}
+        {/* 2026 Authentic Liquid Glass Lens via @ybouane/liquidglass */}
         {is2026 && (
           <div
             ref={glassBoxRef}
-            data-dynamic
             className="timeline-liquid-glass absolute inset-0 rounded-full pointer-events-none"
-            data-config={JSON.stringify({
-              blurAmount: 0,
-              refraction: 0.75,
-              chromAberration: 0.225,
-              edgeHighlight: 0,
-              specular: 0,
-              fresnel: 2,
-              distortion: 0,
-              cornerRadius: 40,
-              zRadius: 30,
-              opacity: 1,
-              saturation: 0,
-              brightness: 0,
-              shadowOpacity: 0.3,
-              shadowSpread: 10,
-              bevelMode: 0,
-            })}
+            style={{ overflow: "visible" }}
           />
         )}
 
@@ -188,7 +174,10 @@ const TimelineSelector = () => {
               : is2004
               ? "border-2 border-[#0055ea]/60 bg-gradient-to-b from-[#ffffff]/90 to-[#ece9d8]/90 shadow-md shadow-blue-900/20 font-sans"
               : is2026
-              ? "!border-none !bg-transparent !shadow-none text-neutral-800 font-sans"
+              ? clsx(
+                  "!border-none !bg-transparent !shadow-none font-sans transition-colors",
+                  isDark2026 ? "text-white" : "text-neutral-800"
+                )
               : "border border-white/40 bg-white/15 shadow-md shadow-black/5 text-neutral-800 font-sans"
           )}
         >
@@ -220,10 +209,14 @@ const TimelineSelector = () => {
                               : "border-[#0055ea]/60 bg-white group-hover:bg-[#0055ea]/30"
                           )
                         : clsx(
-                            "w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full",
+                            "w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full transition-all",
                             isActive
-                              ? "bg-neutral-900"
-                              : "border-2 border-neutral-300 bg-transparent group-hover:border-neutral-500"
+                              ? isDark2026
+                                ? "bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)]"
+                                : "bg-neutral-950 shadow-xs"
+                              : isDark2026
+                              ? "border-2 border-white/50 bg-transparent group-hover:border-white"
+                              : "border-2 border-neutral-500 bg-transparent group-hover:border-neutral-800"
                           )
                     )}
                   />
@@ -239,8 +232,12 @@ const TimelineSelector = () => {
                           ? "text-[#0039a6] font-bold font-sans drop-shadow-xs"
                           : "text-neutral-600 group-hover:text-[#0039a6] font-medium font-sans"
                         : isActive
-                        ? "text-neutral-900 font-bold font-sans"
-                        : "text-neutral-400 group-hover:text-neutral-700 font-medium font-sans"
+                        ? isDark2026
+                          ? "text-white font-bold font-sans drop-shadow-sm"
+                          : "text-neutral-950 font-bold font-sans"
+                        : isDark2026
+                        ? "text-white/70 group-hover:text-white font-semibold font-sans"
+                        : "text-neutral-600 group-hover:text-neutral-900 font-semibold font-sans"
                     )}
                   >
                     {year}
@@ -255,7 +252,9 @@ const TimelineSelector = () => {
                         ? "bg-[#00f0ff]/30"
                         : is2004
                         ? "bg-[#0055ea]/30"
-                        : "bg-neutral-300"
+                        : isDark2026
+                        ? "bg-white/30"
+                        : "bg-neutral-400/60"
                     )}
                   />
                 )}

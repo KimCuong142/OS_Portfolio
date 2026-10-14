@@ -5,130 +5,129 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import useWindowStore from "#store/window";
 import useThemeStore from "#store/theme";
-import clsx from "clsx";
 import { LiquidGlass } from "@ybouane/liquidglass";
+import clsx from "clsx";
 
 gsap.registerPlugin(useGSAP);
 
+const SHADOW_PAD = 20;
+
 const Dock = () => {
   const { openWindow, focusWindow, windows } = useWindowStore();
-  const { currentYear } = useThemeStore();
+  const { currentYear, mode2026 } = useThemeStore();
   const is2077 = currentYear === "2077";
   const is2026 = currentYear === "2026";
+  const isDark2026 = is2026 && mode2026 === "dark";
   const dockRef = useRef(null);
   const dockRootRef = useRef(null);
   const glassBoxRef = useRef(null);
   const bgMirrorRef = useRef(null);
 
-  // Background sampler: Continuously copy the slice of background canvas behind the dock
-  // into the mirror canvas so LiquidGlass WebGL shader refracts the live background!
   useEffect(() => {
     if (!is2026) return;
-    let animId;
-    let isRunning = true;
 
-    const updateMirror = () => {
-      if (!isRunning) return;
-      const bgCanvas = document.getElementById("cyber-2026-canvas");
-      const mirrorCanvas = bgMirrorRef.current;
-      const dockRoot = dockRootRef.current;
+    let liquidInstance = null;
+    let isDestroyed = false;
+    let rafId = null;
+    let attempts = 0;
 
-      if (bgCanvas && mirrorCanvas && dockRoot) {
-        const dockRect = dockRoot.getBoundingClientRect();
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const pad = 20;
-
-        const targetW = Math.round((dockRect.width + pad * 2) * dpr);
-        const targetH = Math.round((dockRect.height + pad * 2) * dpr);
-
-        if (mirrorCanvas.width !== targetW || mirrorCanvas.height !== targetH) {
-          mirrorCanvas.width = targetW;
-          mirrorCanvas.height = targetH;
+    const initLG = async () => {
+      if (
+        !dockRootRef.current ||
+        !glassBoxRef.current ||
+        glassBoxRef.current.offsetWidth === 0
+      ) {
+        if (attempts < 20 && !isDestroyed) {
+          attempts++;
+          rafId = requestAnimationFrame(initLG);
         }
-
-        const ctx = mirrorCanvas.getContext("2d");
-        if (ctx) {
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, targetW, targetH);
-
-          const sx = Math.round((dockRect.left - pad) * dpr);
-          const sy = Math.round((dockRect.top - pad) * dpr);
-          const sw = targetW;
-          const sh = targetH;
-
-          const clampSx = Math.max(0, sx);
-          const clampSy = Math.max(0, sy);
-          const clampSw = Math.min(sw, bgCanvas.width - clampSx);
-          const clampSh = Math.min(sh, bgCanvas.height - clampSy);
-          const dx = clampSx - sx;
-          const dy = clampSy - sy;
-
-          if (clampSw > 0 && clampSh > 0 && bgCanvas.width > 0 && bgCanvas.height > 0) {
-            ctx.drawImage(bgCanvas, clampSx, clampSy, clampSw, clampSh, dx, dy, clampSw, clampSh);
-          }
-        }
+        return;
       }
 
-      animId = requestAnimationFrame(updateMirror);
-    };
-
-    animId = requestAnimationFrame(updateMirror);
-
-    return () => {
-      isRunning = false;
-      cancelAnimationFrame(animId);
-    };
-  }, [is2026]);
-
-  // Initialize WebGL LiquidGlass shader effect for 2026 Dock box
-  useEffect(() => {
-    if (!is2026) return;
-    let instance = null;
-    let isCancelled = false;
-
-    const initGlass = async () => {
-      // Let mirror canvas capture its first frame before compiling shaders
-      await new Promise((resolve) => setTimeout(resolve, 60));
-      if (isCancelled || !dockRootRef.current || !glassBoxRef.current) return;
-
       try {
-        instance = await LiquidGlass.init({
+        liquidInstance = await LiquidGlass.init({
           root: dockRootRef.current,
           glassElements: [glassBoxRef.current],
           defaults: {
             blurAmount: 0,
-            refraction: 0.75,
-            chromAberration: 0.225,
+            refraction: 1.5,
+            chromAberration: 0.3,
             edgeHighlight: 0,
             specular: 0,
-            fresnel: 2,
-            distortion: 0,
+            fresnel: 1,
+            distortion: 0.15,
             cornerRadius: 40,
-            zRadius: 40,
+            zRadius: 30,
             opacity: 1,
-            saturation: 0,
+            saturation: 0.05,
             brightness: 0,
             shadowOpacity: 0.3,
             shadowSpread: 10,
             bevelMode: 0,
           },
         });
-
-        if (isCancelled && instance) {
-          instance.destroy();
+        if (isDestroyed && liquidInstance) {
+          liquidInstance.destroy();
         }
       } catch (err) {
-        console.error("Failed to init LiquidGlass on dock:", err);
+        console.error("LiquidGlass init error (Dock):", err);
       }
     };
 
-    initGlass();
+    rafId = requestAnimationFrame(initLG);
+
+    const updateMirror = () => {
+      if (isDestroyed) return;
+      const mirror = bgMirrorRef.current;
+      const root = dockRootRef.current;
+
+      if (mirror && root) {
+        const rootRect = root.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const targetW = Math.round((rootRect.width + SHADOW_PAD * 2) * dpr);
+        const targetH = Math.round((rootRect.height + SHADOW_PAD * 2) * dpr);
+
+        if (mirror.width !== targetW || mirror.height !== targetH) {
+          mirror.width = targetW;
+          mirror.height = targetH;
+        }
+
+        const ctx = mirror.getContext("2d");
+        if (ctx) {
+          ctx.clearRect(0, 0, targetW, targetH);
+
+          const mirrorViewportX = rootRect.left - SHADOW_PAD;
+          const mirrorViewportY = rootRect.top - SHADOW_PAD;
+          const mirrorViewportW = rootRect.width + SHADOW_PAD * 2;
+          const mirrorViewportH = rootRect.height + SHADOW_PAD * 2;
+
+          // 1. Draw cyber canvas background slice
+          const cyberCanvas = document.getElementById("cyber-2026-canvas");
+          if (cyberCanvas && cyberCanvas.width > 0 && cyberCanvas.height > 0) {
+            const scaleX = cyberCanvas.width / window.innerWidth;
+            const scaleY = cyberCanvas.height / window.innerHeight;
+            const sx = mirrorViewportX * scaleX;
+            const sy = mirrorViewportY * scaleY;
+            const sw = mirrorViewportW * scaleX;
+            const sh = mirrorViewportH * scaleY;
+            ctx.drawImage(cyberCanvas, sx, sy, sw, sh, 0, 0, targetW, targetH);
+          } else {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, targetW, targetH);
+          }
+        }
+      }
+
+      rafId = requestAnimationFrame(updateMirror);
+    };
+
+    rafId = requestAnimationFrame(updateMirror);
 
     return () => {
-      isCancelled = true;
-      if (instance) {
-        instance.destroy();
-        instance = null;
+      isDestroyed = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      if (liquidInstance) {
+        liquidInstance.destroy();
       }
     };
   }, [is2026]);
@@ -228,7 +227,10 @@ const Dock = () => {
 
   return (
     <section id="dock" className="select-none overflow-visible">
-      <div ref={dockRootRef} className="relative group overflow-visible">
+      <div
+        ref={dockRootRef}
+        className="relative group overflow-visible"
+      >
         {/* Futuristic Cockpit bracket backdrop in 2077 mode */}
         {is2077 && (
           <div className="cyber-bracket-bottom absolute -inset-x-10 -top-3.5 -bottom-1 bg-[#00f0ff]/10 border-t border-[#00f0ff]/40 transition-all duration-300 pointer-events-none" />
@@ -239,44 +241,29 @@ const Dock = () => {
           <div className="cyber-dock-bg absolute inset-0 transition-all duration-300 pointer-events-none" />
         )}
 
-        {/* 2026 Dynamic Background Mirror Canvas captured for LiquidGlass */}
+        {/* 2026 LiquidGlass Mirror Canvas (direct child before glass element) */}
         {is2026 && (
           <canvas
             ref={bgMirrorRef}
             data-dynamic
-            className="absolute pointer-events-none opacity-0 -z-20"
+            className="absolute pointer-events-none opacity-0"
             style={{
-              left: -20,
-              top: -20,
-              width: "calc(100% + 40px)",
-              height: "calc(100% + 40px)",
+              left: -SHADOW_PAD,
+              top: -SHADOW_PAD,
+              width: `calc(100% + ${SHADOW_PAD * 2}px)`,
+              height: `calc(100% + ${SHADOW_PAD * 2}px)`,
+              zIndex: -10,
+              opacity: 0,
             }}
           />
         )}
 
-        {/* 2026 Liquid Glass Shader Box Element */}
+        {/* 2026 Authentic Liquid Glass Dock Capsule via @ybouane/liquidglass */}
         {is2026 && (
           <div
             ref={glassBoxRef}
-            data-dynamic
-            className="dock-liquid-glass absolute inset-0 rounded-[24px] sm:rounded-[40px] pointer-events-none"
-            data-config={JSON.stringify({
-              blurAmount: 0,
-              refraction: 0.75,
-              chromAberration: 0.225,
-              edgeHighlight: 0,
-              specular: 0,
-              fresnel: 2,
-              distortion: 0,
-              cornerRadius: 40,
-              zRadius: 40,
-              opacity: 1,
-              saturation: 0,
-              brightness: 0,
-              shadowOpacity: 0.3,
-              shadowSpread: 10,
-              bevelMode: 0,
-            })}
+            className="dock-liquid-glass absolute inset-0 rounded-[24px] sm:rounded-[36px] pointer-events-none"
+            style={{ overflow: "visible" }}
           />
         )}
 
@@ -330,6 +317,8 @@ const Dock = () => {
                       "size-1.5 absolute -bottom-1 pointer-events-none transition-all",
                       is2077
                         ? "rotate-45 bg-[#00f0ff] diamond-glow"
+                        : isDark2026
+                        ? "rounded-full bg-white shadow-[0_0_4px_rgba(255,255,255,0.8)]"
                         : "rounded-full bg-neutral-800"
                     )}
                   />

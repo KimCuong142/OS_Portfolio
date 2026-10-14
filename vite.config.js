@@ -31,5 +31,6 @@ export default defineConfig({
         "src/windows"
       ),
     },
+    dedupe: ["react", "react-dom"],
   },
 });

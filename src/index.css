@@ -25,6 +25,11 @@ body.theme-2026 {
   background-color: #ffffff;
 }
 
+body.theme-2026.mode-dark {
+  background-color: #000000;
+  color: #999ea8;
+}
+
 body.theme-2004 {
   font-family: "Tahoma", "Segoe UI", -apple-system, sans-serif;
   color: #000000;

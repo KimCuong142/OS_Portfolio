@@ -106,7 +106,7 @@ const TimelineSelector = () => {
             const sh = mirrorViewportH * scaleY;
             ctx.drawImage(cyberCanvas, sx, sy, sw, sh, 0, 0, targetW, targetH);
           } else {
-            ctx.fillStyle = "#ffffff";
+            ctx.fillStyle = mode2026 === "dark" ? "#000000" : "#ffffff";
             ctx.fillRect(0, 0, targetW, targetH);
           }
         }

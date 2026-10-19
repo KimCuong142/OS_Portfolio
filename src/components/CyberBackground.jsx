@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import CyberTunnel3D from "./cyber/CyberTunnel3D";
 import CyberHUD from "./cyber/CyberHUD";
+import XPPixelBackground from "./xp/XPPixelBackground";
 import useThemeStore from "#store/theme";
 
 const CyberBackground = () => {
@@ -647,13 +648,8 @@ const CyberBackground = () => {
       <CyberTunnel3D active={is2077} />
       <CyberHUD active={is2077} />
 
-      {/* 2004: Windows XP Bliss Wallpaper */}
-      <div
-        className={`absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-300 ${
-          is2004 ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
-        }`}
-        style={{ backgroundImage: "url('/images/windowsXPwallpaper.jpg')" }}
-      />
+      {/* 2004: Interactive 3D Pixel Dissolve Windows XP Background */}
+      <XPPixelBackground active={is2004} />
 
       {/* 2026: Kinetic accordion typography canvas */}
       <canvas

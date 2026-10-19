@@ -71,8 +71,8 @@ const CyberTunnel3D = ({ active = true }) => {
     intro
       .fromTo(
         engine,
-        { speed: reduceMotion ? 6 : 40 },
-        { speed: reduceMotion ? 4 : 12.0, duration: 1.8, ease: "expo.out" },
+        { speed: reduceMotion ? 3 : 20 },
+        { speed: reduceMotion ? 2 : 5.0, duration: 1.8, ease: "expo.out" },
         0
       )
       .fromTo(u.uBendAmp, { value: 0.2 }, { value: 1.0, duration: 2.0, ease: "sine.inOut" }, 0)
@@ -161,8 +161,8 @@ const CyberTunnel3D = ({ active = true }) => {
         if (Math.random() < 0.35) {
           gsap
             .timeline()
-            .to(engine, { speed: 26.0, duration: 0.5, ease: "power2.in" })
-            .to(engine, { speed: 12.0, duration: 1.6, ease: "power3.out" });
+            .to(engine, { speed: 13.0, duration: 0.5, ease: "power2.in" })
+            .to(engine, { speed: 5.0, duration: 1.6, ease: "power3.out" });
         }
         schedulePulse();
       });

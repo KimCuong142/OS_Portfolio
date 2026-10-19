@@ -13,15 +13,15 @@ import {
 // Tunnel Dimensions (World units matching reference perspective corridor)
 const HALF_W = 8.2;
 const HALF_H = 4.9;
-const TUNNEL_LEN = 165.0;
+const TUNNEL_LEN = 165.0; // Restored to initial full depth length
 const NEAR_Z = -2.2;
 const FAR_Z = NEAR_Z - TUNNEL_LEN;
-const RINGS = 36;
-const DIV_FLOOR = 16;
-const DIV_CEIL = 16;
-const DIV_WALL = 10;
+const RINGS = 22; // Well-spaced transverse rings for full length
+const DIV_FLOOR = 10; // Reduced lines (was 16) for clean, spacious grid
+const DIV_CEIL = 10;  // Reduced lines (was 16)
+const DIV_WALL = 6;   // Reduced lines (was 10)
 const SEGMENTS_Z = 440; // High tessellation density for ultra-smooth curved deformation without angular kinks
-const PARTICLES = 130;
+const PARTICLES = 13; // Reduced to 1/10 (from 130)
 
 // Build longitudinal rails (Floor, Ceiling, Left wall, Right wall)
 const buildTunnelRails = () => {
@@ -41,7 +41,7 @@ const buildTunnelRails = () => {
   // 1. Floor tracks
   for (let i = 0; i <= DIV_FLOOR; i++) {
     const x = -HALF_W + (2 * HALF_W * i) / DIV_FLOOR;
-    const isPhotonTrack = i === 0 || i === 2;
+    const isPhotonTrack = i === 1 || i === 3;
     addRail(x, -HALF_H, isPhotonTrack ? 2.0 : 0.0);
   }
 
@@ -64,40 +64,13 @@ const buildTunnelRails = () => {
     addRail(HALF_W, y, 0.0);
   }
 
-  // 5. Vanishing Box portal frame at the far end
-  const subV = 16;
-  for (let i = 0; i < subV; i++) {
-    const x0 = -HALF_W + (2 * HALF_W * i) / subV;
-    const x1 = -HALF_W + (2 * HALF_W * (i + 1)) / subV;
-    positions.push(x0, -HALF_H, FAR_Z, x1, -HALF_H, FAR_Z);
-    info.push(4.0, 0, 0, 4.0, 0, 0);
-  }
-  for (let j = 0; j < subV; j++) {
-    const y0 = -HALF_H + (2 * HALF_H * j) / subV;
-    const y1 = -HALF_H + (2 * HALF_H * (j + 1)) / subV;
-    positions.push(HALF_W, y0, FAR_Z, HALF_W, y1, FAR_Z);
-    info.push(4.0, 0, 0, 4.0, 0, 0);
-  }
-  for (let i = 0; i < subV; i++) {
-    const x0 = HALF_W - (2 * HALF_W * i) / subV;
-    const x1 = HALF_W - (2 * HALF_W * (i + 1)) / subV;
-    positions.push(x0, HALF_H, FAR_Z, x1, HALF_H, FAR_Z);
-    info.push(4.0, 0, 0, 4.0, 0, 0);
-  }
-  for (let j = 0; j < subV; j++) {
-    const y0 = HALF_H - (2 * HALF_H * j) / subV;
-    const y1 = HALF_H - (2 * HALF_H * (j + 1)) / subV;
-    positions.push(-HALF_W, y0, FAR_Z, -HALF_W, y1, FAR_Z);
-    info.push(4.0, 0, 0, 4.0, 0, 0);
-  }
-
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   geo.setAttribute("aInfo", new THREE.Float32BufferAttribute(info, 3));
   return geo;
 };
 
-// Build transverse rings that travel along Z toward the camera
+// Build transverse rings that travel along Z toward the camera (forming rectangular cells)
 const buildTunnelRings = () => {
   const positions = [];
   const info = [];
@@ -136,21 +109,18 @@ const buildTunnelRings = () => {
   return geo;
 };
 
-// Intersection node dots at floor and corner junctions
+// Intersection node dots at structural corner junctions (thưa và tinh tế)
 const buildNodeGeometry = () => {
   const positions = [];
   const info = [];
 
-  for (let r = 0; r < RINGS; r += 2) {
+  for (let r = 0; r < RINGS; r += 6) {
     const z = NEAR_Z - (r / RINGS) * TUNNEL_LEN;
     [
       [-HALF_W, -HALF_H],
       [HALF_W, -HALF_H],
       [-HALF_W, HALF_H],
       [HALF_W, HALF_H],
-      [0, -HALF_H],
-      [-HALF_W * 0.5, -HALF_H],
-      [HALF_W * 0.5, -HALF_H],
     ].forEach(([x, y]) => {
       positions.push(x, y, z);
       info.push(3.0, Math.random(), 1.0);
@@ -186,7 +156,7 @@ export default class TunnelEngine {
   constructor(container) {
     this.container = container;
     this.lastTime = performance.now() * 0.001;
-    this.speed = 10.0;
+    this.speed = 5.0; // Speed reduced by half (from 10.0 to 5.0)
     this.targetMouse = new THREE.Vector2(0, -0.35);
     this.currentMouse = new THREE.Vector2(0, -0.35);
     this.cameraTilt = new THREE.Vector2(0, 0);
@@ -195,17 +165,19 @@ export default class TunnelEngine {
 
     const width = container.clientWidth || window.innerWidth;
     const height = container.clientHeight || window.innerHeight;
-    // Cap pixelRatio at 1.25 to prevent GPU bottlenecking on high-DPI/Retina screens
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.25);
+    // Mở khóa full độ phân giải Retina gốc (Native Retina pixel ratio, e.g. 2.0x)
+    const pixelRatio = window.devicePixelRatio || 2;
 
     this.renderer = new THREE.WebGLRenderer({
-      antialias: false, // Bloom pass already softens edges; saves fill-rate
+      antialias: true, // Smooth antialiased lines eliminate subpixel aliased strobing
       alpha: false,
+      preserveDrawingBuffer: true,
       powerPreference: "high-performance",
     });
     this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(width, height);
     this.renderer.setClearColor(0x01040a, 1.0);
+    this.renderer.domElement.id = "cyber-2077-canvas";
     this.renderer.domElement.style.display = "block";
     this.renderer.domElement.style.width = "100%";
     this.renderer.domElement.style.height = "100%";
@@ -235,9 +207,26 @@ export default class TunnelEngine {
       uniforms: {
         ...this.shared,
         uScale: { value: 1.0 },
-        uColor: { value: new THREE.Color("#006eff") },
+        uRepelMult: { value: 1.0 }, // Lớp 1: uốn theo hướng chuột
+        uColor: { value: new THREE.Color("#00f0ff") }, // Laser-sharp Electric Cyan
         uStreakColor: { value: new THREE.Color("#ff007f") },
-        uOpacity: { value: 0.88 },
+        uOpacity: { value: 0.92 },
+      },
+      vertexShader: tunnelVertexShader,
+      fragmentShader: tunnelFragmentShader,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+
+    this.ringMat = new THREE.ShaderMaterial({
+      uniforms: {
+        ...this.shared,
+        uScale: { value: 1.0 },
+        uRepelMult: { value: 0.0 }, // Khung chữ nhật uốn thẳng ra xa cursor mà không vặn lệch bên
+        uColor: { value: new THREE.Color("#00e5ff") }, // Sắc nét, sáng rõ cho khung hình chữ nhật
+        uStreakColor: { value: new THREE.Color("#ff007f") },
+        uOpacity: { value: 0.90 }, // Tăng độ dày & độ nét cho các line tạo ô chữ nhật
       },
       vertexShader: tunnelVertexShader,
       fragmentShader: tunnelFragmentShader,
@@ -249,10 +238,11 @@ export default class TunnelEngine {
     this.greenMat = new THREE.ShaderMaterial({
       uniforms: {
         ...this.shared,
-        uScale: { value: 0.985 },
-        uColor: { value: new THREE.Color("#00ff88") },
+        uScale: { value: 1.0 }, // Trùng khít 100% với blueMat khi ở trạng thái nghỉ
+        uRepelMult: { value: -1.0 }, // Lớp 2 (Pink): lệch 45 độ bên PHẢI so với hướng từ tâm cursor chiếu tới
+        uColor: { value: new THREE.Color("#ff3366") }, // Neon Pink/Coral (Cyan + Pink = Pure White ở trạng thái tĩnh)
         uStreakColor: { value: new THREE.Color("#ff0055") },
-        uOpacity: { value: 0.32 },
+        uOpacity: { value: 0.92 },
       },
       vertexShader: tunnelVertexShader,
       fragmentShader: tunnelFragmentShader,
@@ -265,10 +255,11 @@ export default class TunnelEngine {
       uniforms: {
         ...this.shared,
         uScale: { value: 1.0 },
+        uRepelMult: { value: 0.0 },
         uColor: { value: new THREE.Color("#7df9ff") },
         uStreakColor: { value: new THREE.Color("#ffffff") },
-        uOpacity: { value: 0.85 },
-        uPointSize: { value: 1.2 },
+        uOpacity: { value: 0.5 },
+        uPointSize: { value: 0.85 },
       },
       vertexShader: tunnelVertexShader,
       fragmentShader: tunnelFragmentShader,
@@ -282,6 +273,7 @@ export default class TunnelEngine {
       uniforms: {
         ...this.shared,
         uScale: { value: 0.96 },
+        uRepelMult: { value: 0.0 },
         uColor: { value: new THREE.Color("#00f0ff") },
         uStreakColor: { value: new THREE.Color("#ffffff") },
         uOpacity: { value: 0.8 },
@@ -295,22 +287,33 @@ export default class TunnelEngine {
       blending: THREE.AdditiveBlending,
     });
 
-    this.materials = [this.blueMat, this.greenMat, this.nodeMat, this.particleMat];
+    this.materials = [this.blueMat, this.ringMat, this.greenMat, this.nodeMat, this.particleMat];
 
     const blueRailsMesh = new THREE.LineSegments(railsGeo, this.blueMat);
-    const blueRingsMesh = new THREE.LineSegments(ringsGeo, this.blueMat);
+    const blueRingsMesh = new THREE.LineSegments(ringsGeo, this.ringMat);
     const greenRailsMesh = new THREE.LineSegments(railsGeo, this.greenMat);
     const nodesMesh = new THREE.Points(nodeGeo, this.nodeMat);
     const particlesMesh = new THREE.Points(particleGeo, this.particleMat);
 
-    [blueRailsMesh, blueRingsMesh, greenRailsMesh, nodesMesh, particlesMesh].forEach(
+    // Thêm các lưới chính (bao gồm greenRailsMesh để tái hiện Hiệu ứng chồng màu kép Cyan + Emerald Green)
+    [blueRailsMesh, greenRailsMesh, blueRingsMesh].forEach(
       (mesh) => {
         mesh.frustumCulled = false;
         this.scene.add(mesh);
       }
     );
 
-    this.composer = new EffectComposer(this.renderer);
+    // Tạo RenderTarget với 4x Hardware MSAA khử răng cưa đa mẫu bên trong EffectComposer
+    this.renderTarget = new THREE.WebGLRenderTarget(
+      width * pixelRatio,
+      height * pixelRatio,
+      {
+        type: THREE.HalfFloatType,
+        samples: 4, // 4x Hardware MSAA for silky smooth antialiased lines
+      }
+    );
+
+    this.composer = new EffectComposer(this.renderer, this.renderTarget);
     this.composer.setPixelRatio(pixelRatio);
     this.composer.setSize(width, height);
 
@@ -318,17 +321,17 @@ export default class TunnelEngine {
 
     this.bloom = new UnrealBloomPass(
       new THREE.Vector2(width, height),
-      0.62,
-      0.26,
-      0.26
+      0.35, // Balanced bloom for thick dual-tone lines
+      0.18, // Clean blur radius
+      0.32  // Controlled threshold
     );
     this.composer.addPass(this.bloom);
 
     this.fx = new ShaderPass(FinalFXShader);
     this.fx.uniforms.uAspect.value = width / height;
     this.fx.uniforms.uRes.value = [width * pixelRatio, height * pixelRatio];
-    this.fx.uniforms.uAberration.value = 0.007;
-    this.fx.uniforms.uGrain.value = 0.006;
+    this.fx.uniforms.uAberration.value = 0.0;
+    this.fx.uniforms.uGrain.value = 0.0;
     this.composer.addPass(this.fx);
 
     this.composer.addPass(new OutputPass());
@@ -370,7 +373,9 @@ export default class TunnelEngine {
     if (this.disposed) return;
     const width = this.container.clientWidth || window.innerWidth;
     const height = this.container.clientHeight || window.innerHeight;
-    const pr = this.renderer.getPixelRatio();
+    const pr = window.devicePixelRatio || 2;
+    this.renderer.setPixelRatio(pr);
+    this.composer.setPixelRatio(pr);
 
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
@@ -380,6 +385,7 @@ export default class TunnelEngine {
     this.bloom.setSize(width, height);
 
     this.shared.uAspect.value = width / height;
+    this.shared.uPixelRatio.value = pr;
     this.fx.uniforms.uAspect.value = width / height;
     this.fx.uniforms.uRes.value = [width * pr, height * pr];
   }
@@ -421,6 +427,7 @@ export default class TunnelEngine {
     this.materials.forEach((m) => m.dispose());
     this.composer.passes.forEach((p) => p.dispose?.());
     this.composer.dispose?.();
+    this.renderTarget?.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
   }

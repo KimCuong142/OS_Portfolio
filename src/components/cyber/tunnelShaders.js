@@ -61,6 +61,7 @@ uniform float uTravel;
 uniform float uScale;
 uniform float uBendAmp;
 uniform float uRepel;
+uniform float uRepelMult;
 uniform float uAspect;
 uniform float uPointSize;
 uniform float uPixelRatio;
@@ -97,7 +98,7 @@ void main() {
 
   // Traveling rings, nodes and particles move toward the camera
   if (aInfo.z > 0.0) {
-    float span = 165.0; // tunnel length
+    float span = 165.0; // Restored initial tunnel length
     z = mod(z + uTravel * aInfo.z, span) - span - 2.0;
   }
 
@@ -112,9 +113,9 @@ void main() {
     pos.y += floorWave;
   }
 
-  // 3. Subtle cyber noise vibration along the rails
-  float jitter = snoise(vec3(pos.xy * 0.15, z * 0.045 + uTime * 0.4)) * 0.06;
-  pos.xy += vec2(jitter, jitter * 0.5);
+  // 3. Subtle cyber noise vibration along the rails (Tạm thời tắt theo yêu cầu)
+  // float jitter = snoise(vec3(pos.xy * 0.15, z * 0.045 + uTime * 0.4)) * 0.06;
+  // pos.xy += vec2(jitter, jitter * 0.5);
 
   pos.z = z;
 
@@ -145,18 +146,25 @@ void main() {
   float lateralProfile = normDist * t * t * 4.0;
 
   // Enhanced deflection amplitudes: bends straight lines into pronounced, flowing curves
-  float depthAmp = 2.2;    // Deep 3D elastic crater depression into tunnel surfaces
-  float lateralAmp = 3.2;  // Strong sweeping lateral curvature bowing straight grid lines
+  float depthAmp = 2.0;    // 3D elastic crater depression into tunnel surfaces
+  float lateralAmp = 3.4;  // Strong sweeping lateral curvature bowing straight grid lines
 
-  // 1. Outward tunnel cratering: push radially outward from corridor cross-section (floor down, walls out, ceiling up)
-  // 100% continuous everywhere, no if-else branching or seam artifacts!
+  // 1. Outward tunnel cratering: push radially outward into surface
   vec2 outwardNorm = normalize(vec2(pos.x / 8.2, pos.y / 4.9));
   pos.xy += outwardNorm * (bell * depthAmp);
 
-  // 2. Smooth lateral space curvature: bows straight lines outward around the cursor
-  vec3 pushDir = delta / (dist3D + 1e-3);
+  // 2. Smooth space curvature (cả 2 đường cong theo cùng 1 quỹ đạo mượt mà ra xa cursor):
+  vec3 pushDir = delta / (dist3D + 1e-4);
   vec3 lateralDisp = pushDir * (lateralProfile * lateralAmp * uRepel);
   pos += lateralDisp;
+
+  // 3. Tách song song nhưng lìa nhau ra một chút ở chỗ bẻ cong (Parallel Chromatic Offset):
+  // Vector tiếp tuyến ngang bề mặt, vuông góc với đường ray dọc Z (100% liên tục quanh toàn bộ hành lang):
+  vec3 N_in = normalize(vec3(-pos.x / 8.2, -pos.y / 4.9, 0.0));
+  vec3 railSide = normalize(vec3(N_in.y, -N_in.x, 0.0));
+  float splitDist = 0.15; // Khoảng cách lìa nhau vừa vặn, tinh tế
+  float splitAmount = (bell * 0.6 + lateralProfile * 0.4) * splitDist * uRepel;
+  pos -= railSide * (splitAmount * uRepelMult);
 
   // Camera projection
   vec4 viewPos = modelViewMatrix * vec4(pos, 1.0);
@@ -192,7 +200,7 @@ void main() {
     if (disc <= 0.0) discard;
   #endif
 
-  // Depth fog: fades smoothly into dark infinity at far end (-165 to -30)
+  // Depth fog: fades smoothly into dark infinity at far end (-165 to -32)
   float depthFog = smoothstep(-165.0, -32.0, vZ);
   // Near fade: prevents lines from clipping abruptly on the camera lens (-1.5 to -3.8)
   float nearFade = smoothstep(-1.6, -3.8, vZ);
@@ -201,11 +209,10 @@ void main() {
   float alpha = uOpacity * depthFog * nearFade;
 
   // 1. Mouse Repulsion Wireframe Deflection:
-  // Gently brighten the wireframe lines around the cursor with energetic cyan, NO WHITE BLOWOUT!
+  // Smoothly tint the wireframe lines around the cursor with energetic cyan without alpha surge
   if (vRepelForce > 0.03) {
     vec3 energizedColor = mix(col, vec3(0.0, 0.95, 1.0), 0.65);
     col = mix(col, energizedColor, clamp(vRepelForce * 0.9, 0.0, 1.0));
-    alpha = min(0.92, alpha + vRepelForce * 0.22);
   }
 
   // 2. Racing Photon Data Streaks (Neon pink/magenta on designated rails)
@@ -219,11 +226,6 @@ void main() {
     }
   }
 
-  // 3. Vanishing Portal Box (Horizon frame at far end)
-  if (vKind > 3.5) {
-    col = vec3(0.0, 0.55, 0.95);
-    alpha = 0.45 * depthFog;
-  }
 
   #ifdef IS_POINTS
     alpha *= disc;
@@ -287,11 +289,11 @@ export const FinalFXShader = {
         uv.x += (rand(vec2(slice * 2.1, tick)) - 0.5) * 0.035 * sliceTrigger * uGlitch;
       }
 
-      // 1. Radial Chromatic Aberration from screen center
+      // 1. Hiệu ứng tán sắc sắc sai góc nhìn (Chromatic Aberration - Tạm thời disable theo yêu cầu)
+      /*
       vec2 dirFromCenter = uv - 0.5;
       float edgeDist = dot(dirFromCenter, dirFromCenter) * 1.6;
 
-      // 2. Localized cursor chromatic dispersion
       vec2 mDiff = uv - uMouse;
       mDiff.x *= uAspect;
       float mDist = length(mDiff);
@@ -301,26 +303,32 @@ export const FinalFXShader = {
                     + normalize(uv - uMouse + 1e-4) * mSplit
                     + vec2(uGlitch * 0.005, 0.0);
 
-      // Sample RGB channels with chromatic displacement
       float r = texture2D(tDiffuse, uv + caOffset).r;
       float g = texture2D(tDiffuse, uv).g;
       float b = texture2D(tDiffuse, uv - caOffset).b;
       vec3 col = vec3(r, g, b);
+      */
+      vec3 col = texture2D(tDiffuse, uv).rgb;
 
-      // Subtle CRT scanline overlay (preserves black pixels completely)
-      float scanline = 0.975 + 0.025 * sin(uv.y * uRes.y * 1.4);
-      col *= scanline;
+      // Subtle CRT scanline overlay (Tắt để giữ đường line siêu mịn, không bị ngấn ngang)
+      // float scanline = 0.975 + 0.025 * sin(uv.y * uRes.y * 1.4);
+      // col *= scanline;
 
-      // Clean film grain: ONLY applies to illuminated pixels, ZERO noise on black background!
+      // 2. Hạt nhiễu điện ảnh (Film Grain - Tạm thời disable theo yêu cầu)
+      /*
       float lum = length(col);
       if (lum > 0.02) {
         float grain = (rand(uv * uRes + fract(uTime * 7.13) * 91.0) - 0.5) * uGrain;
         col += grain * smoothstep(0.02, 0.35, lum);
       }
+      */
 
-      // Vignette: gentle edge falloff framing the cockpit view
+      // 3. Viền tối góc (Vignette - Tạm thời disable theo yêu cầu)
+      /*
+      vec2 dirFromCenter = uv - 0.5;
       float vignette = smoothstep(1.4, 0.42, length(dirFromCenter * vec2(1.0, 1.15)));
       col *= vignette;
+      */
 
       gl_FragColor = vec4(max(col, 0.0), 1.0);
     }

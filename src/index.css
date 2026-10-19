@@ -529,22 +529,26 @@ body.theme-2004 {
     }
   }
 
-  /* 2077 Cockpit Dock Container */
-  .cyber-dock-container {
-    padding: 6px 20px 8px 20px !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
+  /* Utility to hide scrollbars while preserving scrolling */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
-  .cyber-dock-bg {
-    clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 100%, 0% 100%);
-    background: rgba(2, 13, 24, 0.75);
-    backdrop-filter: blur(14px);
-    border-top: 1.5px solid rgba(0, 240, 255, 0.55);
-    border-left: 1px solid rgba(0, 240, 255, 0.25);
-    border-right: 1px solid rgba(0, 240, 255, 0.25);
-    box-shadow: 0 0 28px rgba(0, 240, 255, 0.22), inset 0 0 18px rgba(0, 240, 255, 0.08);
+  /* 2077 Liquid Glass Dynamic Island / Widget Dock */
+  .cyber-liquid-dock {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 10px;
+    padding: 4px 8px;
+    max-width: calc(100vw - 16px);
   }
 
   /* 2077 Target Cursor Reticle */

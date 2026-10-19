@@ -6,6 +6,7 @@ import gsap from "gsap";
 import useWindowStore from "#store/window";
 import useThemeStore from "#store/theme";
 import { LiquidGlass } from "@ybouane/liquidglass";
+import CyberDockWidgetBar from "./cyber/CyberDockWidgetBar";
 import clsx from "clsx";
 
 gsap.registerPlugin(useGSAP);
@@ -24,7 +25,7 @@ const Dock = () => {
   const bgMirrorRef = useRef(null);
 
   useEffect(() => {
-    if (!is2026) return;
+    if (!is2026 && !is2077) return;
 
     let liquidInstance = null;
     let isDestroyed = false;
@@ -49,20 +50,20 @@ const Dock = () => {
           root: dockRootRef.current,
           glassElements: [glassBoxRef.current],
           defaults: {
-            blurAmount: 0,
+            blurAmount: is2077 ? 0.15 : 0,
             refraction: 1.5,
             chromAberration: 0.3,
             edgeHighlight: 0,
-            specular: 0,
-            fresnel: 1,
+            specular: is2077 ? 0.55 : 0,
+            fresnel: is2077 ? 0 : 1,
             distortion: 0.15,
-            cornerRadius: 40,
-            zRadius: 30,
+            cornerRadius: is2077 ? 10 : 40,
+            zRadius: is2077 ? 100 : 30,
             opacity: 1,
-            saturation: 0.05,
-            brightness: 0,
-            shadowOpacity: 0.3,
-            shadowSpread: 10,
+            saturation: 0.08,
+            brightness: is2077 ? 0.1 : 0,
+            shadowOpacity: is2077 ? 0 : 0.35,
+            shadowSpread: 12,
             bevelMode: 0,
           },
         });
@@ -95,25 +96,51 @@ const Dock = () => {
         const ctx = mirror.getContext("2d");
         if (ctx) {
           ctx.clearRect(0, 0, targetW, targetH);
+          ctx.fillStyle = is2077
+            ? "#01040a"
+            : mode2026 === "dark"
+            ? "#000000"
+            : "#ffffff";
+          ctx.fillRect(0, 0, targetW, targetH);
 
           const mirrorViewportX = rootRect.left - SHADOW_PAD;
           const mirrorViewportY = rootRect.top - SHADOW_PAD;
           const mirrorViewportW = rootRect.width + SHADOW_PAD * 2;
           const mirrorViewportH = rootRect.height + SHADOW_PAD * 2;
 
-          // 1. Draw cyber canvas background slice
-          const cyberCanvas = document.getElementById("cyber-2026-canvas");
+          // 1. Draw cyber canvas background slice (2077 3D tunnel or 2026 canvas)
+          const cyberCanvas = is2077
+            ? document.getElementById("cyber-2077-canvas")
+            : document.getElementById("cyber-2026-canvas");
+
           if (cyberCanvas && cyberCanvas.width > 0 && cyberCanvas.height > 0) {
             const scaleX = cyberCanvas.width / window.innerWidth;
             const scaleY = cyberCanvas.height / window.innerHeight;
-            const sx = mirrorViewportX * scaleX;
-            const sy = mirrorViewportY * scaleY;
-            const sw = mirrorViewportW * scaleX;
-            const sh = mirrorViewportH * scaleY;
-            ctx.drawImage(cyberCanvas, sx, sy, sw, sh, 0, 0, targetW, targetH);
-          } else {
-            ctx.fillStyle = mode2026 === "dark" ? "#000000" : "#ffffff";
-            ctx.fillRect(0, 0, targetW, targetH);
+
+            const rawX = mirrorViewportX * scaleX;
+            const rawY = mirrorViewportY * scaleY;
+            const rawW = mirrorViewportW * scaleX;
+            const rawH = mirrorViewportH * scaleY;
+
+            // Clamped coordinates to strictly prevent IndexSizeError on boundary overflow
+            const sx = Math.max(0, Math.min(cyberCanvas.width, rawX));
+            const sy = Math.max(0, Math.min(cyberCanvas.height, rawY));
+            const sRight = Math.max(0, Math.min(cyberCanvas.width, rawX + rawW));
+            const sBottom = Math.max(0, Math.min(cyberCanvas.height, rawY + rawH));
+            const sw = sRight - sx;
+            const sh = sBottom - sy;
+
+            if (sw > 0 && sh > 0) {
+              const dx = (sx - rawX) * (targetW / rawW);
+              const dy = (sy - rawY) * (targetH / rawH);
+              const dw = sw * (targetW / rawW);
+              const dh = sh * (targetH / rawH);
+              try {
+                ctx.drawImage(cyberCanvas, sx, sy, sw, sh, dx, dy, dw, dh);
+              } catch {
+                // Ignore canvas read issues
+              }
+            }
           }
         }
       }
@@ -130,13 +157,13 @@ const Dock = () => {
         liquidInstance.destroy();
       }
     };
-  }, [is2026]);
+  }, [is2026, is2077, mode2026]);
 
   // GSAP Smooth Icon Magnification on Hover (Zero layout thrashing with cached rects)
   useGSAP(
     () => {
       const dock = dockRef.current;
-      if (!dock) return;
+      if (!dock || is2077) return;
 
       const icons = dock.querySelectorAll(".dock-icon");
       let cachedDockLeft = 0;
@@ -231,18 +258,8 @@ const Dock = () => {
         ref={dockRootRef}
         className="relative group overflow-visible"
       >
-        {/* Futuristic Cockpit bracket backdrop in 2077 mode */}
-        {is2077 && (
-          <div className="cyber-bracket-bottom absolute -inset-x-10 -top-3.5 -bottom-1 bg-[#00f0ff]/10 border-t border-[#00f0ff]/40 transition-all duration-300 pointer-events-none" />
-        )}
-
-        {/* Cockpit dock trapezoid backdrop in 2077 mode (separated so magnified icons are not clipped) */}
-        {is2077 && (
-          <div className="cyber-dock-bg absolute inset-0 transition-all duration-300 pointer-events-none" />
-        )}
-
-        {/* 2026 LiquidGlass Mirror Canvas (direct child before glass element) */}
-        {is2026 && (
+        {/* LiquidGlass Mirror Canvas for 2026 & 2077 (direct child before glass element) */}
+        {(is2026 || is2077) && (
           <canvas
             ref={bgMirrorRef}
             data-dynamic
@@ -258,85 +275,84 @@ const Dock = () => {
           />
         )}
 
-        {/* 2026 Authentic Liquid Glass Dock Capsule via @ybouane/liquidglass */}
-        {is2026 && (
+        {/* Authentic Liquid Glass Dock Capsule via @ybouane/liquidglass */}
+        {(is2026 || is2077) && (
           <div
             ref={glassBoxRef}
-            className="dock-liquid-glass absolute inset-0 rounded-[24px] sm:rounded-[36px] pointer-events-none"
+            className={clsx(
+              "dock-liquid-glass absolute inset-0 pointer-events-none",
+              is2077
+                ? "rounded-[10px]"
+                : "rounded-[24px] sm:rounded-[36px]"
+            )}
             style={{ overflow: "visible" }}
           />
         )}
 
-        <div
-          ref={dockRef}
-          className={clsx(
-            "dock-container relative z-10 transition-all duration-300 overflow-visible",
-            is2077
-              ? "cyber-dock-container"
-              : is2026
-              ? "!border-none !bg-transparent !shadow-none !rounded-[24px] sm:!rounded-[40px]"
-              : "!bg-white/10 !backdrop-blur-sm !border !border-white/40 shadow-lg shadow-black/5"
-          )}
-        >
-          {dockApps.map(({ id, name, icon, canOpen }) => {
-            const isOpen = windows[id]?.isOpen;
-            return (
-              <div
-                key={id}
-                className="relative flex flex-col items-center justify-center px-0.5 sm:px-1 overflow-visible"
-              >
-                <button
-                  type="button"
-                  className={clsx(
-                    "dock-icon transition-filter duration-200",
-                    is2077 && "hover:drop-shadow-[0_0_10px_rgba(0,240,255,0.8)]"
-                  )}
-                  aria-label={name}
-                  data-tooltip-id="dock-tooltip"
-                  data-tooltip-content={name}
-                  data-tooltip-delay-show={100}
-                  disabled={!canOpen}
-                  onClick={() => toggleApp({ id, canOpen })}
-                >
-                  <img
-                    src={`images/${icon}`}
-                    alt={name}
-                    loading="lazy"
-                    className={clsx(
-                      "transition-opacity duration-150",
-                      canOpen ? "" : "opacity-50",
-                      is2077 && "filter brightness-110"
-                    )}
-                  />
-                </button>
-
-                {/* Open window indicator */}
-                {isOpen && (
-                  <span
-                    className={clsx(
-                      "size-1.5 absolute -bottom-1 pointer-events-none transition-all",
-                      is2077
-                        ? "rotate-45 bg-[#00f0ff] diamond-glow"
-                        : isDark2026
-                        ? "rounded-full bg-white shadow-[0_0_4px_rgba(255,255,255,0.8)]"
-                        : "rounded-full bg-neutral-800"
-                    )}
-                  />
-                )}
-              </div>
-            );
-          })}
-
-          <Tooltip
-            id="dock-tooltip"
-            place="top"
+        {/* 2077 Liquid Glass Dynamic Island / Widget Dock */}
+        {is2077 ? (
+          <div
+            ref={dockRef}
+            className="cyber-liquid-dock relative z-10 transition-all duration-300 rounded-[10px] overflow-visible"
+          >
+            <CyberDockWidgetBar />
+          </div>
+        ) : (
+          <div
+            ref={dockRef}
             className={clsx(
-              "tooltip",
-              is2077 &&
-                "!bg-[#021020] !border !border-[#00f0ff]/70 !text-[#00f0ff] cyan-glow font-mono text-[11px] tracking-wider"
+              "dock-container relative z-10 transition-all duration-300 overflow-visible",
+              is2026
+                ? "!border-none !bg-transparent !shadow-none !rounded-[24px] sm:!rounded-[40px]"
+                : "!bg-white/10 !backdrop-blur-sm !border !border-white/40 shadow-lg shadow-black/5"
             )}
-          />
-        </div>
+          >
+            {dockApps.map(({ id, name, icon, canOpen }) => {
+              const isOpen = windows[id]?.isOpen;
+              return (
+                <div
+                  key={id}
+                  className="relative flex flex-col items-center justify-center px-0.5 sm:px-1 overflow-visible"
+                >
+                  <button
+                    type="button"
+                    className="dock-icon transition-filter duration-200"
+                    aria-label={name}
+                    data-tooltip-id="dock-tooltip"
+                    data-tooltip-content={name}
+                    data-tooltip-delay-show={100}
+                    disabled={!canOpen}
+                    onClick={() => toggleApp({ id, canOpen })}
+                  >
+                    <img
+                      src={`images/${icon}`}
+                      alt={name}
+                      loading="lazy"
+                      className={clsx(
+                        "transition-opacity duration-150",
+                        canOpen ? "" : "opacity-50"
+                      )}
+                    />
+                  </button>
+
+                  {/* Open window indicator */}
+                  {isOpen && (
+                    <span
+                      className={clsx(
+                        "size-1.5 absolute -bottom-1 pointer-events-none transition-all",
+                        isDark2026
+                          ? "rounded-full bg-white shadow-[0_0_4px_rgba(255,255,255,0.8)]"
+                          : "rounded-full bg-neutral-800"
+                      )}
+                    />
+                  )}
+                </div>
+              );
+            })}
+
+            <Tooltip id="dock-tooltip" place="top" className="tooltip" />
+          </div>
+        )}
       </div>
     </section>
   );

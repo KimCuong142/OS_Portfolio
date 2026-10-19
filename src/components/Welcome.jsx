@@ -7,12 +7,26 @@ import clsx from "clsx";
 gsap.registerPlugin(useGSAP);
 
 const renderText = (text, className) => {
-  return [...text].map((char, i) => (
-    <span
-      key={i}
-      className={clsx(className, "inline-block will-change-transform select-none")}
-    >
-      {char === " " ? "\u00A0" : char}
+  const words = text.split(" ");
+  return words.map((word, wordIdx) => (
+    <span key={wordIdx} className="inline-block whitespace-nowrap">
+      {[...word].map((char, charIdx) => (
+        <span
+          key={charIdx}
+          data-char="true"
+          className={clsx(className, "inline-block will-change-transform select-none")}
+        >
+          {char}
+        </span>
+      ))}
+      {wordIdx < words.length - 1 && (
+        <span
+          data-char="true"
+          className={clsx(className, "inline-block will-change-transform select-none")}
+        >
+          {"\u00A0"}
+        </span>
+      )}
     </span>
   ));
 };
@@ -22,7 +36,7 @@ const renderText = (text, className) => {
 const setupTextHover = (container, type) => {
   if (!container) return () => {};
 
-  const letters = container.querySelectorAll("span");
+  const letters = container.querySelectorAll("[data-char]");
   let cachedBounds = null;
 
   const updateBounds = () => {
@@ -109,12 +123,12 @@ const Welcome = () => {
     <section
       ref={rootRef}
       id="welcome"
-      className="select-none pointer-events-none z-10 flex flex-col items-center justify-center text-center"
+      className="select-none pointer-events-none z-10 flex flex-col items-center justify-center text-center w-full max-w-full px-4"
     >
-      <p ref={subtitleRef} className="pointer-events-auto cursor-default">
+      <p ref={subtitleRef} className="pointer-events-auto cursor-default whitespace-nowrap px-2">
         {renderText(
           "Hey, I'm Kim Cuong! Welcome to my",
-          "text-xs sm:text-2xl md:text-3xl font-orbitron tracking-wider sm:tracking-widest text-[#00f0ff]/90 drop-shadow-[0_0_10px_rgba(0,240,255,0.6)] px-2"
+          "text-xs sm:text-lg md:text-2xl lg:text-3xl font-orbitron tracking-wider sm:tracking-widest text-[#00f0ff]/90 drop-shadow-[0_0_10px_rgba(0,240,255,0.6)]"
         )}
       </p>
       <h1 ref={titleRef} className="mt-1 sm:mt-4 pointer-events-auto cursor-default">

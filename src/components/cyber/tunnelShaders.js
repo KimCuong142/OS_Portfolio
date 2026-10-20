@@ -235,7 +235,8 @@ void main() {
     }
   #endif
 
-  gl_FragColor = vec4(col, clamp(alpha, 0.0, 1.0));
+  float finalAlpha = clamp(alpha, 0.0, 1.0);
+  gl_FragColor = vec4(col * finalAlpha, finalAlpha);
 }
 `;
 

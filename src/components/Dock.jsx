@@ -53,18 +53,18 @@ const Dock = () => {
             blurAmount: is2077 ? 0.15 : 0,
             refraction: 1.5,
             chromAberration: 0.3,
-            edgeHighlight: 0,
+            edgeHighlight: is2077 ? 0.3 : 0,
             specular: is2077 ? 0.55 : 0,
             fresnel: is2077 ? 0 : 1,
             distortion: 0.15,
-            cornerRadius: is2077 ? 10 : 40,
+            cornerRadius: is2077 ? 0 : 40,
             zRadius: is2077 ? 100 : 30,
             opacity: 1,
             saturation: 0.08,
-            brightness: is2077 ? 0.1 : 0,
+            brightness: is2077 ? 0.15 : 0,
             shadowOpacity: is2077 ? 0 : 0.35,
             shadowSpread: 12,
-            bevelMode: 0,
+            bevelMode: is2077 ? 1 : 0,
           },
         });
         if (isDestroyed && liquidInstance) {
@@ -282,7 +282,7 @@ const Dock = () => {
             className={clsx(
               "dock-liquid-glass absolute inset-0 pointer-events-none",
               is2077
-                ? "rounded-[10px]"
+                ? "rounded-none"
                 : "rounded-[24px] sm:rounded-[36px]"
             )}
             style={{ overflow: "visible" }}
@@ -293,7 +293,7 @@ const Dock = () => {
         {is2077 ? (
           <div
             ref={dockRef}
-            className="cyber-liquid-dock relative z-10 transition-all duration-300 rounded-[10px] overflow-visible"
+            className="cyber-liquid-dock relative z-10 transition-all duration-300 rounded-none overflow-visible"
           >
             <CyberDockWidgetBar />
           </div>

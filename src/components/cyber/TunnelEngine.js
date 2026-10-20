@@ -216,7 +216,9 @@ export default class TunnelEngine {
       fragmentShader: tunnelFragmentShader,
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      blending: THREE.CustomBlending,
+      blendEquation: THREE.MaxEquation,
+      blendEquationAlpha: THREE.MaxEquation,
     });
 
     this.ringMat = new THREE.ShaderMaterial({
@@ -232,7 +234,9 @@ export default class TunnelEngine {
       fragmentShader: tunnelFragmentShader,
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      blending: THREE.CustomBlending,
+      blendEquation: THREE.MaxEquation,
+      blendEquationAlpha: THREE.MaxEquation,
     });
 
     this.greenMat = new THREE.ShaderMaterial({
@@ -248,7 +252,9 @@ export default class TunnelEngine {
       fragmentShader: tunnelFragmentShader,
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      blending: THREE.CustomBlending,
+      blendEquation: THREE.MaxEquation,
+      blendEquationAlpha: THREE.MaxEquation,
     });
 
     this.nodeMat = new THREE.ShaderMaterial({
@@ -320,11 +326,42 @@ export default class TunnelEngine {
     this.composer.addPass(new RenderPass(this.scene, this.camera));
 
     this.bloom = new UnrealBloomPass(
-      new THREE.Vector2(width, height),
-      0.35, // Balanced bloom for thick dual-tone lines
-      0.18, // Clean blur radius
-      0.32  // Controlled threshold
+      new THREE.Vector2(width * pixelRatio, height * pixelRatio),
+      0.35, // Balanced bloom for dual-tone lines
+      0.28, // Smooth continuous blur radius
+      0.01  // Low threshold above background (0x01040a) so 1px lines never clip into discrete dots
     );
+    this.bloom.highPassUniforms.smoothWidth.value = 0.02;
+    this.bloom.highPassUniforms.uTexelSize = {
+      value: new THREE.Vector2(1 / (width * pixelRatio), 1 / (height * pixelRatio)),
+    };
+    this.bloom.materialHighPassFilter.fragmentShader = /* glsl */ `
+      uniform sampler2D tDiffuse;
+      uniform vec3 defaultColor;
+      uniform float defaultOpacity;
+      uniform float luminosityThreshold;
+      uniform float smoothWidth;
+      uniform vec2 uTexelSize;
+      varying vec2 vUv;
+
+      void main() {
+        // 4-bilinear-tap tent filter spaced by +-0.5 physical texels of readBuffer.
+        // Guarantees an exact partition of unity across 2x downsampling even on odd viewport dimensions,
+        // preventing 1px lines from skipping odd rows/columns and breaking into blurry dots.
+        vec2 d = uTexelSize * 0.5;
+        vec4 texel = 0.25 * (
+          texture2D(tDiffuse, vUv + vec2(-d.x, -d.y)) +
+          texture2D(tDiffuse, vUv + vec2( d.x, -d.y)) +
+          texture2D(tDiffuse, vUv + vec2(-d.x,  d.y)) +
+          texture2D(tDiffuse, vUv + vec2( d.x,  d.y))
+        );
+        float v = luminance(texel.xyz);
+        vec4 outputColor = vec4(defaultColor.rgb, defaultOpacity);
+        float alpha = smoothstep(luminosityThreshold, luminosityThreshold + smoothWidth, v);
+        gl_FragColor = mix(outputColor, texel, alpha);
+      }
+    `;
+    this.bloom.materialHighPassFilter.needsUpdate = true;
     this.composer.addPass(this.bloom);
 
     this.fx = new ShaderPass(FinalFXShader);
@@ -382,7 +419,12 @@ export default class TunnelEngine {
 
     this.renderer.setSize(width, height);
     this.composer.setSize(width, height);
-    this.bloom.setSize(width, height);
+    if (this.bloom.highPassUniforms.uTexelSize) {
+      this.bloom.highPassUniforms.uTexelSize.value.set(
+        1 / (width * pr),
+        1 / (height * pr)
+      );
+    }
 
     this.shared.uAspect.value = width / height;
     this.shared.uPixelRatio.value = pr;

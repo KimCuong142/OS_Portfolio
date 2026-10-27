@@ -120,19 +120,48 @@ const CyberTunnel3D = ({ active = true }) => {
       }
     };
 
-    const onPointerMove = (e) => {
-      const nx = (e.clientX / window.innerWidth) * 2 - 1;
-      const ny = -((e.clientY / window.innerHeight) * 2 - 1);
+    // Coalesce pointer events: apply at most once per frame (mice report up to 1000Hz)
+    let pendingX = 0;
+    let pendingY = 0;
+    let rafPending = false;
+    let lastTarget = null;
+    let lastOverUI = false;
+    let repelActive = false;
+
+    const applyPointer = () => {
+      rafPending = false;
+      const nx = (pendingX / window.innerWidth) * 2 - 1;
+      const ny = -((pendingY / window.innerHeight) * 2 - 1);
       engine.setMouse(nx, ny);
-      setX(e.clientX);
-      setY(e.clientY);
-      showReticle(!isOverUI(e.target));
-      gsap.to(u.uRepel, { value: 1.0, duration: 0.4, ease: "power2.out", overwrite: "auto" });
+      setX(pendingX);
+      setY(pendingY);
+    };
+
+    const onPointerMove = (e) => {
+      pendingX = e.clientX;
+      pendingY = e.clientY;
+      if (!rafPending) {
+        rafPending = true;
+        requestAnimationFrame(applyPointer);
+      }
+
+      // Cache UI hit-test per target element (closest() with a long selector is costly)
+      if (e.target !== lastTarget) {
+        lastTarget = e.target;
+        lastOverUI = isOverUI(e.target);
+      }
+      showReticle(!lastOverUI);
+
+      if (!repelActive) {
+        repelActive = true;
+        gsap.to(u.uRepel, { value: 1.0, duration: 0.4, ease: "power2.out", overwrite: "auto" });
+      }
     };
 
     const onPointerLeave = (e) => {
       if (e.relatedTarget) return;
       showReticle(false);
+      repelActive = false;
       gsap.to(u.uRepel, { value: 0.4, duration: 0.8, ease: "power2.inOut", overwrite: "auto" });
     };
 
@@ -151,8 +180,8 @@ const CyberTunnel3D = ({ active = true }) => {
       );
     };
 
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerdown", onPointerDown, { passive: true });
     window.addEventListener("mouseout", onPointerLeave);
 
     let pulseCall;

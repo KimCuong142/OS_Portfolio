@@ -77,14 +77,34 @@ const Dock = () => {
 
     rafId = requestAnimationFrame(initLG);
 
-    const updateMirror = () => {
+    // Throttle mirror redraw (~30fps), cache layout rect and cap DPR: the glass only needs a soft backdrop
+    let lastMirrorAt = 0;
+    let cachedRect = null;
+    let rectAt = 0;
+    const refreshRect = () => {
+      cachedRect = null;
+    };
+    window.addEventListener("resize", refreshRect);
+    window.addEventListener("scroll", refreshRect, true);
+
+    const updateMirror = (ts = 0) => {
       if (isDestroyed) return;
+      if (ts - lastMirrorAt < 33) {
+        rafId = requestAnimationFrame(updateMirror);
+        return;
+      }
+      lastMirrorAt = ts;
+
       const mirror = bgMirrorRef.current;
       const root = dockRootRef.current;
 
       if (mirror && root) {
-        const rootRect = root.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
+        if (!cachedRect || ts - rectAt > 500) {
+          cachedRect = root.getBoundingClientRect();
+          rectAt = ts;
+        }
+        const rootRect = cachedRect;
+        const dpr = 1;
         const targetW = Math.round((rootRect.width + SHADOW_PAD * 2) * dpr);
         const targetH = Math.round((rootRect.height + SHADOW_PAD * 2) * dpr);
 
@@ -152,6 +172,8 @@ const Dock = () => {
 
     return () => {
       isDestroyed = true;
+      window.removeEventListener("resize", refreshRect);
+      window.removeEventListener("scroll", refreshRect, true);
       if (rafId) cancelAnimationFrame(rafId);
       if (liquidInstance) {
         liquidInstance.destroy();

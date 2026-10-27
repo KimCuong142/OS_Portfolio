@@ -61,7 +61,7 @@ const Navbar = () => {
       className={clsx(
         "relative z-30 flex justify-between items-center p-2 px-5 select-none transition-all duration-300",
         is2077
-          ? "bg-[#021020]/25 backdrop-blur-sm border-b border-[#00f0ff]/25 text-[#00f0ff]"
+          ? "bg-[#021020]/60 border-b border-[#00f0ff]/25 text-[#00f0ff]"
           : isDark2026
           ? "bg-black/25 backdrop-blur-md border-b border-white/10 text-white/90 shadow-sm"
           : "bg-white/10 backdrop-blur-sm border-b border-black/5 text-neutral-800 shadow-sm"

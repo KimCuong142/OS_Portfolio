@@ -20,7 +20,7 @@ const RINGS = 22; // Well-spaced transverse rings for full length
 const DIV_FLOOR = 10; // Reduced lines (was 16) for clean, spacious grid
 const DIV_CEIL = 10;  // Reduced lines (was 16)
 const DIV_WALL = 6;   // Reduced lines (was 10)
-const SEGMENTS_Z = 440; // High tessellation density for ultra-smooth curved deformation without angular kinks
+const SEGMENTS_Z = 160; // Reduced tessellation (was 440) - curvature along Z is low-frequency so it stays smooth
 const PARTICLES = 13; // Reduced to 1/10 (from 130)
 
 // Build longitudinal rails (Floor, Ceiling, Left wall, Right wall)
@@ -76,8 +76,8 @@ const buildTunnelRings = () => {
   const info = [];
 
   const perim = [];
-  const subH = 160; // Ultra-fine subdivision along floor/ceiling for silky smooth curvature
-  const subV = 96;  // Ultra-fine subdivision along walls
+  const subH = 64; // Subdivision along floor/ceiling (was 160)
+  const subV = 40; // Subdivision along walls (was 96)
 
   for (let i = 0; i < subH; i++) {
     perim.push([-HALF_W + (2 * HALF_W * i) / subH, -HALF_H]);
@@ -165,13 +165,19 @@ export default class TunnelEngine {
 
     const width = container.clientWidth || window.innerWidth;
     const height = container.clientHeight || window.innerHeight;
-    // Mở khóa full độ phân giải Retina gốc (Native Retina pixel ratio, e.g. 2.0x)
-    const pixelRatio = window.devicePixelRatio || 2;
+    // Cap pixel ratio: native Retina (2x-3x) multiplies fill-rate cost 4-9x.
+    // Bloom softens lines so 1.5x is visually near-identical.
+    this.maxPixelRatio = 1.5;
+    this.minPixelRatio = 1.0;
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, this.maxPixelRatio);
+    this.pixelRatio = pixelRatio;
+    this.frameEma = 1 / 60;
+    this.perfCheckAt = performance.now() + 2000;
 
     this.renderer = new THREE.WebGLRenderer({
-      antialias: true, // Smooth antialiased lines eliminate subpixel aliased strobing
+      antialias: false, // MSAA is handled by the composer render target
       alpha: false,
-      preserveDrawingBuffer: true,
+      preserveDrawingBuffer: true, // Needed by Dock glass mirror (drawImage of this canvas)
       powerPreference: "high-performance",
     });
     this.renderer.setPixelRatio(pixelRatio);
@@ -194,6 +200,7 @@ export default class TunnelEngine {
       uRepel: { value: 1.0 },
       uAspect: { value: width / height },
       uMouse: { value: new THREE.Vector2(0, -0.35) },
+      uMouseHit: { value: new THREE.Vector3(0, -2, -6) }, // 3D cursor ray hit, computed on CPU
       uPixelRatio: { value: pixelRatio },
     };
 
@@ -309,13 +316,13 @@ export default class TunnelEngine {
       }
     );
 
-    // Tạo RenderTarget với 4x Hardware MSAA khử răng cưa đa mẫu bên trong EffectComposer
+    // RenderTarget with 2x MSAA (was 4x on HalfFloat - very costly)
     this.renderTarget = new THREE.WebGLRenderTarget(
       width * pixelRatio,
       height * pixelRatio,
       {
         type: THREE.HalfFloatType,
-        samples: 4, // 4x Hardware MSAA for silky smooth antialiased lines
+        samples: 2,
       }
     );
 
@@ -375,6 +382,7 @@ export default class TunnelEngine {
 
     this.handleResize = this.handleResize.bind(this);
     this.tick = this.tick.bind(this);
+    this.updateMouseHit();
     window.addEventListener("resize", this.handleResize);
     this.renderer.setAnimationLoop(this.tick);
   }
@@ -391,6 +399,28 @@ export default class TunnelEngine {
     this.targetMouse.set(ndcX, ndcY);
     this.currentMouse.set(ndcX, ndcY);
     this.shared.uMouse.value.set(ndcX, ndcY);
+    this.updateMouseHit();
+  }
+
+  // Ray from camera through cursor intersected with tunnel walls (was done per-vertex in GLSL)
+  updateMouseHit() {
+    const aspect = this.shared.uAspect.value;
+    const rx = this.targetMouse.x * aspect * 0.75;
+    const ry = this.targetMouse.y * 0.75;
+    const len = Math.sqrt(rx * rx + ry * ry + 1);
+    const dx = rx / len;
+    const dy = ry / len;
+    const dz = -1 / len;
+    const tx = Math.abs(dx) > 1e-4 ? HALF_W / Math.abs(dx) : 999;
+    const ty = Math.abs(dy) > 1e-4 ? HALF_H / Math.abs(dy) : 999;
+    const tHit = Math.min(Math.max(Math.min(tx, ty), 3.5), 50);
+    this.shared.uMouseHit.value.set(dx * tHit, dy * tHit, dz * tHit);
+  }
+
+  // Apply a new pixel ratio (used by adaptive quality)
+  setPixelRatio(pr) {
+    this.pixelRatio = pr;
+    this.handleResize();
   }
 
   pause() {
@@ -410,7 +440,7 @@ export default class TunnelEngine {
     if (this.disposed) return;
     const width = this.container.clientWidth || window.innerWidth;
     const height = this.container.clientHeight || window.innerHeight;
-    const pr = window.devicePixelRatio || 2;
+    const pr = Math.min(window.devicePixelRatio || 1, this.pixelRatio);
     this.renderer.setPixelRatio(pr);
     this.composer.setPixelRatio(pr);
 
@@ -427,6 +457,7 @@ export default class TunnelEngine {
     }
 
     this.shared.uAspect.value = width / height;
+    this.updateMouseHit();
     this.shared.uPixelRatio.value = pr;
     this.fx.uniforms.uAspect.value = width / height;
     this.fx.uniforms.uRes.value = [width * pr, height * pr];
@@ -435,8 +466,23 @@ export default class TunnelEngine {
   tick() {
     if (this.disposed || this.paused) return;
     const now = performance.now() * 0.001;
-    const dt = Math.min(now - this.lastTime, 0.05);
+    const rawDt = now - this.lastTime;
+    const dt = Math.min(rawDt, 0.05);
     this.lastTime = now;
+
+    // Adaptive quality: if frames stay slow, step the pixel ratio down (never back up)
+    this.frameEma += (Math.min(rawDt, 0.1) - this.frameEma) * 0.05;
+    const nowMs = now * 1000;
+    if (nowMs > this.perfCheckAt) {
+      this.perfCheckAt = nowMs + 1500;
+      if (this.frameEma > 0.022 && this.pixelRatio > this.minPixelRatio) {
+        this.setPixelRatio(Math.max(this.minPixelRatio, this.pixelRatio - 0.25));
+        this.frameEma = 1 / 60;
+      }
+    }
+
+    // Skip the full-screen FX pass when no glitch is active (it is otherwise a plain copy)
+    this.fx.enabled = this.fx.uniforms.uGlitch.value > 0.01;
 
     this.shared.uTime.value = now;
     this.shared.uTravel.value += dt * this.speed;

@@ -66,6 +66,7 @@ uniform float uAspect;
 uniform float uPointSize;
 uniform float uPixelRatio;
 uniform vec2 uMouse;
+uniform vec3 uMouseHit;
 
 // aInfo.x: 0 = track, 1 = transverse ring, 2 = photon streak track, 3 = node/particle, 4 = vanishing box
 // aInfo.y: random seed per line / particle
@@ -77,7 +78,7 @@ varying float vZ;
 varying float vSeed;
 varying float vKind;
 
-${SIMPLEX_NOISE}
+// (simplex noise removed from vertex shader: jitter pass is disabled)
 
 // Centerline serpentine curve
 vec2 getSplineCenter(float z, float t) {
@@ -120,14 +121,8 @@ void main() {
   pos.z = z;
 
   // 4. Ultra-Smooth Continuous Space-Bending & Elastic Curvature
-  // Calculates an unprojected ray through the cursor into the 3D tunnel corridor
-  vec3 rayDir = normalize(vec3(uMouse.x * uAspect * 0.75, uMouse.y * 0.75, -1.0));
-  
-  // Find where this ray intersects the tunnel surface (halfW = 8.2, halfH = 4.9)
-  float tx = (abs(rayDir.x) > 1e-4) ? (8.2 / abs(rayDir.x)) : 999.0;
-  float ty = (abs(rayDir.y) > 1e-4) ? (4.9 / abs(rayDir.y)) : 999.0;
-  float tHit = clamp(min(tx, ty), 3.5, 50.0);
-  vec3 mouseHit3D = rayDir * tHit;
+  // Cursor ray hit point on the tunnel surface is computed once on the CPU (uMouseHit)
+  vec3 mouseHit3D = uMouseHit;
 
   // Vector from cursor hit point to vertex in 3D world space
   vec3 delta = pos - mouseHit3D;

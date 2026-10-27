@@ -472,19 +472,18 @@ body.theme-2004 {
     width: 18px;
     height: 18px;
     border-color: rgba(0, 240, 255, 0.85);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
   }
 
   .hud-panel {
     pointer-events: auto;
     font-family: "Share Tech Mono", monospace;
     letter-spacing: 0.05em;
-    background: rgba(2, 14, 28, 0.35);
+    background: rgba(2, 14, 28, 0.6);
     border: 1px solid rgba(0, 240, 255, 0.22);
     padding: 6px 10px;
     border-radius: 2px;
-    backdrop-filter: blur(5px);
-    box-shadow: 0 0 14px rgba(0, 240, 255, 0.12), inset 0 0 8px rgba(0, 240, 255, 0.05);
+    /* No backdrop-filter: blurring the live WebGL canvas behind forces a re-blur every frame */
+    contain: layout paint;
   }
 
   .hud-heading {
@@ -512,7 +511,6 @@ body.theme-2004 {
 
   .hud-radar {
     color: #00f0ff;
-    filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.6));
   }
 
   .hud-radar-sweep {
@@ -556,7 +554,7 @@ body.theme-2004 {
     position: fixed;
     pointer-events: none;
     z-index: 9999;
-    filter: drop-shadow(0 0 6px #00f0ff) drop-shadow(0 0 14px rgba(0, 240, 255, 0.7));
+    will-change: transform;
   }
 
   body.theme-2077.cyber-hide-cursor,

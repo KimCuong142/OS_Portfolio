@@ -148,15 +148,12 @@ const CyberDockWidgetBar = () => {
   const [trackProgress, setTrackProgress] = useState(38);
 
   useEffect(() => {
-    let animId;
-    if (isPlaying) {
-      const stepProg = () => {
-        setTrackProgress((p) => (p >= 100 ? 0 : p + 0.15));
-        animId = requestAnimationFrame(stepProg);
-      };
-      animId = requestAnimationFrame(stepProg);
-    }
-    return () => cancelAnimationFrame(animId);
+    if (!isPlaying) return;
+    // 250ms tick (same 9%/s speed as the old per-frame 0.15 step) instead of re-rendering at 60Hz
+    const id = setInterval(() => {
+      setTrackProgress((p) => (p >= 100 ? 0 : p + 2.25));
+    }, 250);
+    return () => clearInterval(id);
   }, [isPlaying]);
 
   const togglePlay = (e) => {
@@ -369,7 +366,7 @@ const CyberDockWidgetBar = () => {
           {/* Mini progress bar along bottom */}
           <div className="w-full h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden">
             <div
-              className="h-full bg-white/70 rounded-full transition-all"
+              className="h-full bg-white/70 rounded-full transition-[width] duration-300 ease-linear"
               style={{ width: `${trackProgress}%` }}
             />
           </div>

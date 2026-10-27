@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -9,7 +9,7 @@ const bar = (pct, cells = 10) => {
 
 const rand = (min, max) => Math.round(min + Math.random() * (max - min));
 
-const Pie = ({ pct }) => {
+const Pie = memo(({ pct }) => {
   const r = 7;
   const c = 2 * Math.PI * r;
   return (
@@ -28,19 +28,25 @@ const Pie = ({ pct }) => {
       />
     </svg>
   );
-};
+});
+Pie.displayName = "Pie";
 
-const Spark = ({ values }) => (
+const Spark = memo(({ values }) => (
   <span className="inline-flex items-end gap-[2px] h-3" aria-hidden="true">
     {values.map((v, i) => (
       <span
         key={i}
-        className="w-[3px] bg-[#00f0ff] shadow-[0_0_4px_#00f0ff]"
-        style={{ height: `${v}%`, transition: "height 0.6s ease" }}
+        className="w-[3px] h-full bg-[#00f0ff]"
+        style={{
+          transform: `scaleY(${v / 100})`,
+          transformOrigin: "bottom",
+          transition: "transform 0.6s ease",
+        }}
       />
     ))}
   </span>
-);
+));
+Spark.displayName = "Spark";
 
 const Heading = ({ children, align = "left" }) => (
   <div className={`hud-heading ${align === "right" ? "hud-heading--right" : ""}`}>

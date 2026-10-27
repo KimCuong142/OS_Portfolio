@@ -2,61 +2,36 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 import { Draggable } from "gsap/Draggable";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { perlin3 } from "./sequin/noise";
+import { createEnvTexture, createBrushedNormalTexture } from "./sequin/textures";
+import {
+  SEQUIN_VERT,
+  SEQUIN_FRAG,
+  GLINT_VERT,
+  GLINT_FRAG,
+  TRAIL_ORB_VERT,
+  TRAIL_ORB_FRAG,
+} from "./sequin/shaders";
 
 /**
- * XPPixelBackground — Interactive Holographic "Tấm Kim Sa Gió" (8 - 12 Tấm Trên Toàn Màn Hình)
+ * XPPixelBackground — Micro-Sequin "Liquid Chrome" Wall (Windows XP / 2004 tab)
  *
- * Thiết kế & Khắc phục triệt để:
- * 1. Đúng 8 – 12 tấm kim sa trên TOÀN MÀN HÌNH:
- *    - Desktop / Landscape: Lưới 4 cột x 3 hàng = 12 tấm lớn phủ vừa khít 100% khung hình (không bị cắt mép).
- *    - Tablet: Lưới 3 cột x 3 hàng = 9 tấm.
- *    - Mobile Portrait: Lưới 2 cột x 4 hàng = 8 tấm.
- * 2. Phản chiếu rõ nét màn hình Windows XP + Ánh Holographic Dichroic tự nhiên (Không bị trắng đục):
- *    - Khắc phục hoàn toàn hiện tượng cháy sáng trắng đục (over-exposure do cộng dồn nhiều nguồn sáng + ACES ToneMapping)
- *      bằng cách tính toán quang học trực tiếp ở bước xuất màu cuối (`toneMapped: false`).
- *    - Mỗi tấm kim sa phản chiếu sắc nét hình nền đồi cỏ & bầu trời Windows XP (có độ trượt gương Parallax
- *      theo góc nghiêng 3D của tấm), kết hợp lớp màng giao thoa Holographic Dichroic (Xanh Cyan, Lam Cobalt,
- *      Tím Lavender, Hồng Phấn, Vàng Champagne) rực rỡ và trong trẻo như ảnh mẫu.
- * 3. Phản chiếu trực tiếp Con Trỏ Chuột (Cursor Mirror Reflection) rõ nét trên mặt từng tấm kim sa.
+ * - Hàng trăm hạt kim sa lục giác / tròn nhỏ xếp so le (hex-packed), treo trên đinh ghim.
+ * - Vật lý lò xo (spring) cho từng hạt: gió Perlin noise nền + vệt chuột (cursor trail) làm hạt
+ *   lật 3D quanh trục đinh rồi dao động tắt dần.
+ * - Hiệu ứng lật 2 mặt: mặt trước gương holographic, mặt sau đen mờ / vàng champagne.
+ * - Shader: normal map xước mờ + môi trường (studio HDRI) xoay chậm + tán sắc quang sai (chromatic
+ *   aberration) ở rìa, phản chiếu hình nền Windows XP và con trỏ chuột.
+ * - Hậu kỳ: bloom nhẹ + tia sao 4 cánh (star glint) nhấp nháy khi hạt bắt đúng góc phản xạ.
+ * - Quality tier (high / medium / low) tự hạ khi FPS thấp hoặc prefers-reduced-motion.
  */
 
 const BLISS_IMAGE_URL = "/images/windowsXPwallpaper.jpg";
 const BLISS_ASPECT = 4500 / 3000; // 1.5
-
-function createGradientEnvironment(renderer) {
-  const envCanvas = document.createElement("canvas");
-  envCanvas.width = 512;
-  envCanvas.height = 256;
-  const ctx = envCanvas.getContext("2d");
-
-  if (ctx) {
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, 256);
-    bgGrad.addColorStop(0.0, "#7ec8ff");
-    bgGrad.addColorStop(0.3, "#d4eeff");
-    bgGrad.addColorStop(0.5, "#fff8eb");
-    bgGrad.addColorStop(0.75, "#b8e698");
-    bgGrad.addColorStop(1.0, "#5da844");
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, 512, 256);
-
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.fillRect(0, 36, 512, 18);
-    ctx.fillRect(0, 112, 512, 20);
-  }
-
-  const envTexture = new THREE.CanvasTexture(envCanvas);
-  envTexture.mapping = THREE.EquirectangularReflectionMapping;
-  envTexture.colorSpace = THREE.SRGBColorSpace;
-
-  const pmremGenerator = new THREE.PMREMGenerator(renderer);
-  pmremGenerator.compileEquirectangularShader();
-  const envRT = pmremGenerator.fromEquirectangular(envTexture);
-
-  envTexture.dispose();
-  pmremGenerator.dispose();
-
-  return envRT;
-}
 
 /**
  * Tạo Texture Atlas 4 trạng thái con trỏ chuột chuẩn macOS (512x128 = 4 ô 128x128):
@@ -351,26 +326,49 @@ const XPPixelBackground = ({ active = true }) => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.toneMapping = THREE.NoToneMapping;
 
-    const envRT = createGradientEnvironment(renderer);
-    scene.environment = envRT.texture;
-
     // ============================================================================
-    // 2. HỆ THỐNG ÁNH SÁNG (AMBIENT + DIRECTIONAL + DYNAMIC CURSOR POINTLIGHT)
+    // 1b. QUALITY TIER, TEXTURES & POST-PROCESSING (BLOOM)
     // ============================================================================
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
-    scene.add(ambientLight);
+    const reducedMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const tiers = {
+      high: { px: 26, bloom: true, glints: true, ratio: 1.5 },
+      medium: { px: 34, bloom: true, glints: true, ratio: 1.25 },
+      low: { px: 44, bloom: false, glints: false, ratio: 1 },
+    };
+    let tierName = reducedMotion ? "low" : window.innerWidth < 900 ? "medium" : "high";
+    let tier = tiers[tierName];
 
-    const mainDirLight = new THREE.DirectionalLight(0xfff9e8, 1.35);
-    mainDirLight.position.set(22, 42, 75);
-    scene.add(mainDirLight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, tier.ratio));
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const rimDirLight = new THREE.DirectionalLight(0x88d4ff, 1.0);
-    rimDirLight.position.set(-32, -30, 60);
-    scene.add(rimDirLight);
+    const envTex = createEnvTexture();
+    const normalTex = createBrushedNormalTexture();
 
-    const cursorLight = new THREE.PointLight(0xffffff, 0, 80, 1.2);
-    cursorLight.position.set(0, 0, 26);
-    scene.add(cursorLight);
+    const composer = new EffectComposer(
+      renderer,
+      new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
+        type: THREE.HalfFloatType,
+        samples: 4,
+      })
+    );
+    composer.setPixelRatio(renderer.getPixelRatio());
+    composer.setSize(window.innerWidth, window.innerHeight);
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(
+      new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        0.18,
+        0.30,
+        1.25
+      )
+    );
+    composer.addPass(new OutputPass());
+
+    let frameEma = 16;
+    let slowFrames = 0;
+
 
     // ============================================================================
     // 3. TÍNH TOÁN KÍCH THƯỚC KHUNG NHÌN 3D (KHÔNG DÙNG RAYCASTER)
@@ -474,468 +472,286 @@ const XPPixelBackground = ({ active = true }) => {
     };
 
     // ============================================================================
-    // 5. GEOMETRY & CHẤT LIỆU KIM SA PHẢN CHIẾU MÀN HÌNH XP + HOLOGRAPHIC + CURSOR
+    // 5. MICRO-SEQUIN MATERIAL, GEOMETRY & GLINT LAYER
     // ============================================================================
-    // Hình vuông 1x1 mỏng với tâm xoay (pivot) đặt đúng tại vị trí đinh ghim (y = 0.90 tính từ đáy, tức dịch -0.40)
-    const sequinGeo = new THREE.PlaneGeometry(1, 1);
+    const uEnvRot = { value: 0.0 };
+    const uAberr = { value: 0.55 };
+    const uTileUv = { value: new THREE.Vector2(0.03, 0.03) };
+    const uLightDir = { value: new THREE.Vector3(0.3, 0.5, 0.8).normalize() };
+    const uLightPos = { value: new THREE.Vector3(0, 10, 45) };
+
+    // 4 nguồn sáng chạy sau đuôi cursor
+    const uTrailLights = {
+      value: [
+        new THREE.Vector4(0, 0, 5.0, 0),
+        new THREE.Vector4(0, 0, 6.5, 0),
+        new THREE.Vector4(0, 0, 8.0, 0),
+        new THREE.Vector4(0, 0, 9.5, 0),
+      ],
+    };
+    const uTrailColors = {
+      value: [
+        new THREE.Color(0.40, 0.88, 1.00), // Cyan Ice Blue
+        new THREE.Color(1.00, 0.85, 0.50), // Warm Champagne Gold
+        new THREE.Color(0.92, 0.55, 0.98), // Lavender Violet
+        new THREE.Color(0.55, 0.98, 0.72), // Mint Emerald
+      ],
+    };
+
+    // Lục giác pointy-top, tâm xoay (pivot) tại đinh ghim gần mép trên (y = +0.40)
+    const sequinGeo = new THREE.CircleGeometry(0.5, 6, Math.PI / 6);
     sequinGeo.translate(0, -0.4, 0);
 
-    const sequinMat = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff,
-      metalness: 0.9,
-      roughness: 0.14,
-      clearcoat: 0.85,
-      clearcoatRoughness: 0.1,
-      transparent: true,
-      toneMapped: false, // Tắt ToneMapping tự động để không bao giờ bị cháy trắng đục
+    const sequinMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uBliss: { value: blissTexture },
+        uEnv: { value: envTex },
+        uNormalTex: { value: normalTex },
+        uCursorTex: { value: cursorAtlasTex },
+        uUvScale,
+        uUvOffset,
+        uCursorWorld,
+        uCursorActive,
+        uCursorScale,
+        uCursorType,
+        uCursorPressed,
+        uSplitAmount,
+        uTime,
+        uLightColor,
+        uLightStrength,
+        uEnvRot,
+        uAberr,
+        uTileUv,
+        uLightDir,
+        uLightPos,
+        uTrailLights,
+        uTrailColors,
+      },
+      vertexShader: SEQUIN_VERT,
+      fragmentShader: SEQUIN_FRAG,
       side: THREE.DoubleSide,
     });
 
-    sequinMat.onBeforeCompile = (shader) => {
-      shader.uniforms.uBlissMap = { value: blissTexture };
-      shader.uniforms.uCursorTex = { value: cursorAtlasTex };
-      shader.uniforms.uUvScale = uUvScale;
-      shader.uniforms.uUvOffset = uUvOffset;
-      shader.uniforms.uCursorWorld = uCursorWorld;
-      shader.uniforms.uCursorActive = uCursorActive;
-      shader.uniforms.uCursorScale = uCursorScale;
-      shader.uniforms.uCursorType = uCursorType;
-      shader.uniforms.uCursorPressed = uCursorPressed;
-      shader.uniforms.uSplitAmount = uSplitAmount;
-      shader.uniforms.uTime = uTime;
-      shader.uniforms.uLightColor = uLightColor;
-      shader.uniforms.uLightStrength = uLightStrength;
+    const glintGeo = new THREE.PlaneGeometry(1, 1);
+    const glintMat = new THREE.ShaderMaterial({
+      vertexShader: GLINT_VERT,
+      fragmentShader: GLINT_FRAG,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
 
-      shader.vertexShader = `
-        attribute vec4 aCellRect;
-        attribute vec3 aTileSeed;
-        varying vec2 vLocalUv;
-        varying vec4 vCellRect;
-        varying vec3 vTileSeed;
-        varying vec3 vWorldPos;
-        varying vec3 vInstanceNormal;
-        varying vec2 vPinWorld;
-        varying vec2 vTileDims;
-        ${shader.vertexShader}
-      `.replace(
-        "#include <begin_vertex>",
-        `
-        #include <begin_vertex>
-        vLocalUv = uv;
-        vCellRect = aCellRect;
-        vTileSeed = aTileSeed;
-        vec4 sqWorldPos = modelMatrix * instanceMatrix * vec4(transformed, 1.0);
-        vWorldPos = sqWorldPos.xyz;
-        // Cột 2 của instanceMatrix chính là vector pháp tuyến đơn vị (d, -b*c, a*c) của tấm kim sa
-        vInstanceNormal = normalize(instanceMatrix[2].xyz);
-        // Cột 3 của instanceMatrix là tọa độ thế giới cố định của đinh ghim (z = 0)
-        vPinWorld = instanceMatrix[3].xy;
-        vTileDims = vec2(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz));
-        `
-      );
+    // 4 đốm sáng phát quang bay sau đuôi chuột (pastel: cyan, champagne gold, lavender, mint)
+    const orbGeo = new THREE.PlaneGeometry(1, 1);
+    const trailOrbs = [];
+    const trailOrbsGroup = new THREE.Group();
+    trailOrbsGroup.renderOrder = 30;
+    scene.add(trailOrbsGroup);
 
-      shader.fragmentShader = `
-        uniform sampler2D uBlissMap;
-        uniform sampler2D uCursorTex;
-        uniform vec2 uUvScale;
-        uniform vec2 uUvOffset;
-        uniform vec2 uCursorWorld;
-        uniform float uCursorActive;
-        uniform float uCursorScale;
-        uniform float uCursorType;
-        uniform float uCursorPressed;
-        uniform float uSplitAmount;
-        uniform float uTime;
-        uniform vec3 uLightColor;
-        uniform float uLightStrength;
-
-        varying vec2 vLocalUv;
-        varying vec4 vCellRect;
-        varying vec3 vTileSeed;
-        varying vec3 vWorldPos;
-        varying vec3 vInstanceNormal;
-        varying vec2 vPinWorld;
-        varying vec2 vTileDims;
-
-        float sdRoundedBox(vec2 p, vec2 b, float r) {
-          vec2 q = abs(p) - b + r;
-          return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
-        }
-
-        // Bảng màu Dichroic Pastel Holographic chuẩn theo ảnh mẫu (chuyển sang không gian Linear để giữ đúng độ no màu sau bước xuất sRGB)
-        vec3 sampleDichroicHoloLinear(float phase) {
-          float p = fract(phase) * 6.0;
-          int idx = int(floor(p));
-          float f = smoothstep(0.0, 1.0, fract(p));
-
-          vec3 c0 = vec3(0.98, 0.82, 0.64); // Champagne Warm Peach
-          vec3 c1 = vec3(0.80, 0.96, 0.78); // Mint Lemon Pearl
-          vec3 c2 = vec3(0.55, 0.92, 0.99); // Icy Aqua Cyan
-          vec3 c3 = vec3(0.36, 0.68, 0.99); // Sky Cobalt Blue
-          vec3 c4 = vec3(0.72, 0.54, 0.97); // Lavender Violet
-          vec3 c5 = vec3(0.96, 0.58, 0.82); // Rose Pink Blush
-
-          vec3 srgbCol = mix(c5, c0, f);
-          if (idx == 0) srgbCol = mix(c0, c1, f);
-          else if (idx == 1) srgbCol = mix(c1, c2, f);
-          else if (idx == 2) srgbCol = mix(c2, c3, f);
-          else if (idx == 3) srgbCol = mix(c3, c4, f);
-          else if (idx == 4) srgbCol = mix(c4, c5, f);
-
-          return pow(srgbCol, vec3(2.2));
-        }
-
-        float sdSegment(vec2 p, vec2 a, vec2 b) {
-          vec2 pa = p - a, ba = b - a;
-          float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-          return length(pa - ba * h);
-        }
-
-        float sdTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
-          vec2 e0 = p1 - p0, e1 = p2 - p1, e2 = p0 - p2;
-          vec2 v0 = p - p0, v1 = p - p1, v2 = p - p2;
-          vec2 pq0 = v0 - e0 * clamp(dot(v0, e0) / dot(e0, e0), 0.0, 1.0);
-          vec2 pq1 = v1 - e1 * clamp(dot(v1, e1) / dot(e1, e1), 0.0, 1.0);
-          vec2 pq2 = v2 - e2 * clamp(dot(v2, e2) / dot(e2, e2), 0.0, 1.0);
-          float s = sign(e0.x * e2.y - e0.y * e2.x);
-          vec2 d = min(
-            min(
-              vec2(dot(pq0, pq0), s * (v0.x * e0.y - v0.y * e0.x)),
-              vec2(dot(pq1, pq1), s * (v1.x * e1.y - v1.y * e1.x))
-            ),
-            vec2(dot(pq2, pq2), s * (v2.x * e2.y - v2.y * e2.x))
-          );
-          return -sqrt(d.x) * sign(d.y);
-        }
-
-        float sdArrowCursor(vec2 p) {
-          float dHead = sdTriangle(p, vec2(0.0, 0.0), vec2(0.0, -0.92), vec2(0.66, -0.66));
-          float dStem = sdSegment(p, vec2(0.24, -0.58), vec2(0.46, -1.06)) - 0.085;
-          return min(dHead, dStem);
-        }
-
-        ${shader.fragmentShader}
-      `.replace(
-        "#include <opaque_fragment>",
-        `
-        vec2 sqCenteredUv = vLocalUv - 0.5;
-
-        // 1. Bo góc tròn nhẹ cho từng tấm kim sa lớn khi đã tách nền
-        float sqDBox = -0.5;
-        if (uSplitAmount > 0.04) {
-          float sqCornerRadius = 0.022 * uSplitAmount;
-          sqDBox = sdRoundedBox(sqCenteredUv, vec2(0.5, 0.5), sqCornerRadius);
-          if (sqDBox > 0.0) discard;
-        }
-
-        vec3 sqRawN = normalize(vInstanceNormal);
-        if (!gl_FrontFacing) sqRawN = -sqRawN;
-
-        // Pháp tuyến mặt gương của tấm kim sa (kèm độ cong vi mô nhẹ ở rìa)
-        vec3 sqNormal = normalize(sqRawN + vec3(sqCenteredUv * 0.14 * uSplitAmount, 0.0));
-        vec3 sqViewDir = normalize(cameraPosition - vWorldPos);
-        vec3 sqReflDir = reflect(-sqViewDir, sqNormal);
-
-        // =========================================================================
-        // 2. PHẢN CHIẾU MÀN HÌNH WINDOWS XP SẮC NÉT LÊN TỪNG TẤM KIM SA
-        // =========================================================================
-        vec2 sqScreenUv = vCellRect.xy + vLocalUv * vCellRect.zw;
-        vec2 sqMirrorParallax = sqNormal.xy * 0.095 * uSplitAmount + sqCenteredUv * 0.018 * uSplitAmount;
-        vec2 sqBlissUv = clamp((sqScreenUv + sqMirrorParallax) * uUvScale + uUvOffset, 0.002, 0.998);
-        vec3 sqXpReflection = texture2D(uBlissMap, sqBlissUv).rgb;
-
-        // =========================================================================
-        // 3. HIỆU ỨNG ÁNH CẦU VỒNG HOLOGRAPHIC DỊU NHẸ NHƯNG BIẾN ĐỔI MẠNH THEO HƯỚNG NGHIÊNG
-        // =========================================================================
-        float sqTiltAmt = length(sqNormal.xy);
-        float sqFresnel = pow(1.0 - max(0.0, dot(sqNormal, sqViewDir)), 1.6);
-
-        // Tăng mạnh độ nhạy biến đổi pha màu và trục dải cầu vồng theo hướng nghiêng (sqNormal.xy) của tấm kim sa
-        float sqDirShift = sqNormal.x * 5.6 - sqNormal.y * 6.0 + (sqNormal.x * sqNormal.y) * 8.5;
-        vec2 sqHoloAxis = normalize(vec2(0.55 + sqNormal.y * 4.5, 0.45 - sqNormal.x * 4.5));
-        float sqTileDiag = dot(sqCenteredUv, sqHoloAxis);
-
-        float sqHoloPhase =
-          sqScreenUv.y * 0.24 +
-          sqDirShift +
-          sqTileDiag * (0.55 + sqTiltAmt * 2.5) +
-          (vTileSeed.x - 0.5) * 0.36;
-
-        vec3 sqHoloColor1 = sampleDichroicHoloLinear(sqHoloPhase);
-        vec3 sqHoloColor2 = sampleDichroicHoloLinear(sqHoloPhase + 0.28 + sqCenteredUv.y * 0.32 + sqNormal.x * 1.4);
-        vec3 sqHoloSpectrum = mix(sqHoloColor1, sqHoloColor2, 0.45);
-
-        // Dải phản quang lấp lánh (Holographic Specular Band) quét nhạy theo hướng nghiêng của tấm kim sa
-        float sqSweepCoord = sqCenteredUv.x * 0.80 + sqCenteredUv.y * 0.65 + (sqNormal.x * 4.8 + sqNormal.y * 4.5);
-        float sqSheenBand = exp(-pow(sqSweepCoord * 2.2, 2.0));
-        float sqSecondaryBand = exp(-pow((sqSweepCoord - 0.38) * 3.2, 2.0)) * 0.55;
-
-        // Làm nhạt bớt lớp phủ Holographic nền để hình phản chiếu Windows XP trong trẻo hơn,
-        // đồng thời chỉ đẩy ánh cầu vồng rực lên rõ theo góc nghiêng của tấm kim sa
-        float sqIridStrength = clamp((0.20 + sqTiltAmt * 1.85 + sqFresnel * 0.25) * uSplitAmount, 0.0, 0.64);
-        vec3 sqTintedXp = mix(sqXpReflection, sqXpReflection * (0.48 + 1.15 * sqHoloSpectrum), sqIridStrength);
-        vec3 sqCol = mix(sqTintedXp, sqHoloSpectrum, clamp((0.07 + sqTiltAmt * 0.72 + sqSheenBand * 0.18) * uSplitAmount, 0.0, 0.30));
-
-        // Cộng thêm ánh lóe cầu vồng tại dải bắt sáng chéo khi nghiêng
-        float sqGlintFactor = (sqSheenBand * 0.38 + sqSecondaryBand * 0.24) * (0.18 + sqTiltAmt * 2.2) * uSplitAmount;
-        sqCol += sqHoloSpectrum * sqGlintFactor * 0.36 + totalSpecular * sqHoloSpectrum * 0.10 * uSplitAmount;
-
-        // Ánh sáng phản quang động từ PointLight bám theo con trỏ chuột
-        float sqDistToMouse = length(vWorldPos.xy - uCursorWorld);
-        float sqMouseSpot = exp(-sqDistToMouse * sqDistToMouse / (uCursorScale * uCursorScale * 16.0)) * uLightStrength;
-        sqCol += mix(pow(uLightColor, vec3(2.2)), sqHoloSpectrum, 0.6) * sqMouseSpot * 0.25 * uSplitAmount;
-
-        // =========================================================================
-        // 4. VIỀN PHẢN CHIẾU ĐẬM Ở MÉP KHI TẤM KIM SA LẬT NGHIÊNG (Giống ảnh mẫu)
-        // =========================================================================
-        float sqBottomEdgeBand = (1.0 - smoothstep(0.0, 0.055 + sqTiltAmt * 0.18, vLocalUv.y)) * clamp(sqTiltAmt * 2.6, 0.0, 0.85);
-        float sqSideEdgeBand = (1.0 - smoothstep(0.0, 0.045 + abs(sqNormal.x) * 0.16, min(vLocalUv.x, 1.0 - vLocalUv.x))) * clamp(abs(sqNormal.x) * 2.5, 0.0, 0.75);
-        float sqDarkEdge = max(sqBottomEdgeBand, sqSideEdgeBand) * uSplitAmount;
-        vec3 sqDeepEdgeTone = sampleDichroicHoloLinear(sqHoloPhase + 0.35) * 0.22 + sqXpReflection * 0.15;
-        sqCol = mix(sqCol, sqDeepEdgeTone, sqDarkEdge * 0.72);
-
-        // Viền vát cạnh kim loại & đường gờ bóng đổ mỏng quanh 4 cạnh để tách biệt rõ từng tấm trên nền XP
-        float sqInnerBevel = (smoothstep(-0.020, -0.006, sqDBox) - smoothstep(-0.006, 0.0, sqDBox)) * uSplitAmount;
-        float sqOuterRimShadow = smoothstep(-0.007, 0.0, sqDBox) * uSplitAmount;
-        sqCol = mix(sqCol, mix(sqHoloSpectrum, vec3(1.0), 0.6), sqInnerBevel * 0.6);
-        sqCol = mix(sqCol, sqCol * 0.28, sqOuterRimShadow * 0.78);
-
-        // Chiếu tọa độ fragment về mặt phẳng màn hình z = 0 để khớp chính xác với tọa độ con trỏ chuột và đinh ghim
-        vec2 sqScreenPlaneXY = cameraPosition.xy + (vWorldPos.xy - cameraPosition.xy) * (cameraPosition.z / max(1.0, cameraPosition.z - vWorldPos.z));
-
-        // =========================================================================
-        // 5. PHẢN CHIẾU CON TRỎ CHUỘT MACOS KHỚP VỊ TRÍ, KÍCH THƯỚC & TRẠNG THÁI (MŨI TÊN / BÀN TAY / CLICK)
-        // =========================================================================
-        if (uCursorActive > 0.005) {
-          // Độ lệch gương phản chiếu nhẹ theo độ nghiêng 3D thực tế của tấm kim sa (sqNormal.xy)
-          vec2 sqMirrorShift = sqNormal.xy * (uCursorScale * 0.72) + vec2(0.06, -0.07) * uCursorScale;
-          float sqPressScale = 1.0 - 0.10 * uCursorPressed;
-          vec2 sqCursorLocal = (sqScreenPlaneXY - (uCursorWorld + sqMirrorShift)) / max(0.25, uCursorScale * sqPressScale);
-          vec2 sqCellUv = sqCursorLocal + 0.5;
-
-          float sqCursorProximity = 1.0 - smoothstep(uCursorScale * 0.9, uCursorScale * 3.2, length(sqScreenPlaneXY - uCursorWorld));
-          float sqReflVis = uCursorActive * sqCursorProximity * uSplitAmount;
-
-          // Hiệu ứng vòng gợn sóng cầu vồng nhỏ tại đầu trỏ chuột khi người dùng nhấn Click
-          if (uCursorPressed > 0.01) {
-            float sqClickDist = length(sqCursorLocal);
-            float sqClickRing = exp(-pow((sqClickDist - 0.24) * 10.0, 2.0)) * uCursorPressed * sqReflVis;
-            sqCol = mix(sqCol, mix(sqHoloSpectrum, vec3(1.0), 0.55), clamp(sqClickRing * 0.65, 0.0, 0.65));
-          }
-
-          if (sqCellUv.x > 0.02 && sqCellUv.x < 0.98 && sqCellUv.y > 0.02 && sqCellUv.y < 0.98) {
-            float sqTypeIdx = floor(clamp(uCursorType + 0.5, 0.0, 3.0));
-            float sqAtlasU = (sqTypeIdx + sqCellUv.x) * 0.25;
-
-            // Tán sắc cầu vồng nhẹ ở viền ảnh phản chiếu của con trỏ trong mặt gương kim sa
-            vec4 sqCurCenter = texture2D(uCursorTex, vec2(sqAtlasU, sqCellUv.y));
-            float sqCurR = texture2D(uCursorTex, vec2(sqAtlasU + 0.0025, sqCellUv.y - 0.008)).a;
-            float sqCurB = texture2D(uCursorTex, vec2(sqAtlasU - 0.0025, sqCellUv.y + 0.008)).a;
-
-            float sqChromaHalo = clamp((sqCurR + sqCurB) * 0.5 - sqCurCenter.a * 0.6, 0.0, 1.0);
-            sqCol = mix(sqCol, mix(sqHoloSpectrum, vec3(1.0), 0.4), sqChromaHalo * 0.55 * sqReflVis);
-
-            // Phủ hình ảnh phản chiếu của con trỏ (mũi tên đen viền trắng macOS hoặc bàn tay trắng viền đen) kèm ánh gương Holographic nhẹ
-            vec3 sqReflectedCursorRGB = mix(sqCurCenter.rgb, sqCurCenter.rgb * (0.65 + 0.75 * sqHoloSpectrum), 0.28);
-            sqCol = mix(sqCol, sqReflectedCursorRGB, clamp(sqCurCenter.a * 0.86 * sqReflVis, 0.0, 0.92));
-          }
-        }
-
-        // =========================================================================
-        // 6. CHỐT ĐINH TREO KIM LOẠI 3D CỐ ĐỊNH TRÊN TƯỜNG (KHÔNG LẮC THEO KIM SA)
-        // =========================================================================
-        if (uSplitAmount > 0.04) {
-          float sqMinDim = max(0.001, min(vTileDims.x, vTileDims.y));
-          vec2 sqFixedPinDelta = (sqScreenPlaneXY - vPinWorld) / sqMinDim;
-
-          // Lỗ khuy tròn đục trên tấm kim sa (lắc nhẹ quanh thân đinh cố định khi tấm kim sa nghiêng)
-          vec2 sqHoleDelta = (vLocalUv - vec2(0.5, 0.90)) * (vTileDims / sqMinDim);
-          float sqHoleDist = length(sqHoleDelta);
-          float sqHoleMask = (1.0 - smoothstep(0.025, 0.032, sqHoleDist)) * uSplitAmount;
-          sqCol = mix(sqCol, vec3(0.015, 0.02, 0.03), sqHoleMask * 0.88);
-
-          // Bóng đổ của đầu đinh ghim cố định hắt xuống mặt tấm kim sa
-          float sqPinShadowDist = length(sqFixedPinDelta - vec2(0.008, -0.016) + sqNormal.xy * 0.010);
-          float sqPinShadow = (1.0 - smoothstep(0.012, 0.036, sqPinShadowDist)) * uSplitAmount;
-          sqCol = mix(sqCol, sqCol * 0.24, sqPinShadow * 0.68);
-
-          // Đầu đinh kim loại bạc 3D cố định tuyệt đối tại vPinWorld (không bao giờ lắc theo tấm kim sa)
-          vec2 sqPegDelta = sqFixedPinDelta / 0.021;
-          float sqPegDist = length(sqPegDelta);
-          if (sqPegDist < 1.0) {
-            float sqPegZ = sqrt(max(0.0, 1.0 - dot(sqPegDelta, sqPegDelta)));
-            vec3 sqPegNormal = normalize(vec3(sqPegDelta, sqPegZ));
-            float sqPegSpec = pow(max(0.0, dot(sqPegNormal, normalize(vec3(-0.35, 0.55, 0.75)))), 6.0);
-            vec3 sqPegColor = mix(vec3(0.32, 0.36, 0.42), vec3(1.0, 1.0, 1.0), sqPegSpec * 0.85 + sqPegZ * 0.25);
-            float sqPegEdgeAA = (1.0 - smoothstep(0.82, 1.0, sqPegDist)) * uSplitAmount;
-            sqCol = mix(sqCol, sqPegColor, sqPegEdgeAA);
-          }
-        }
-
-        // Gán vào outgoingLight ngay trước bước #include <opaque_fragment> để Three.js xuất màu chuẩn sRGB
-        outgoingLight = mix(sqXpReflection, clamp(sqCol, 0.0, 1.0), smoothstep(0.0, 0.25, uSplitAmount));
-        #include <opaque_fragment>
-        `
-      );
-    };
+    for (let i = 0; i < 4; i++) {
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          uColor: { value: uTrailColors.value[i] },
+          uAlpha: { value: 0.0 },
+        },
+        vertexShader: TRAIL_ORB_VERT,
+        fragmentShader: TRAIL_ORB_FRAG,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const mesh = new THREE.Mesh(orbGeo, mat);
+      mesh.frustumCulled = false;
+      mesh.renderOrder = 30;
+      mesh.visible = false;
+      trailOrbsGroup.add(mesh);
+      trailOrbs.push({ mesh, mat });
+    }
 
     let instancedMesh = null;
-    let cols = 6;
-    let rows = 4;
-    let totalInstances = 24;
-    let cellW = 1;
-    let cellH = 1;
+    let glintMesh = null;
+    let glintAttr = null;
+    let iconCols = 6;
+    let iconRows = 4;
+    let totalInstances = 0;
+    let tileSize = 1;
+    let tileScale = 1;
 
     let originX = null;
     let originY = null;
     let normX = null;
     let normY = null;
-    let phaseArr = null;
     let speedArr = null;
+    let seedArr = null;
     let restRotX = null;
     let restRotY = null;
-    let restRotZ = null;
     let rotX = null;
     let rotY = null;
-    let rotZ = null;
     let velX = null;
     let velY = null;
-    let velZ = null;
+    let cooldown = null;
     let cellSplitDist = null;
 
-    /**
-     * Khởi tạo lưới InstancedMesh với số lượng tăng gấp đôi (16 – 24 tấm kim sa trên toàn màn hình):
-     * - Desktop / Landscape: 6 cột x 4 hàng = 24 tấm (hoặc 6 x 3 = 18 tấm trên màn hình siêu rộng)
-     * - Tablet: 4 cột x 4 hàng = 16 tấm
-     * - Mobile Portrait: 3 cột x 5 hàng = 15 tấm
-     * Tất cả các tấm nằm trọn vẹn 100% trong khung nhìn, không bị cắt mép.
-     */
-    const buildSequinWall = () => {
+    // Vệt chuột (cursor trail): các đoạn gần nhất kèm tuổi thọ giảm dần
+    const trail = [];
+    const TRAIL_MAX = 14;
+
+    // Lưới ảo cho Desktop Icons (tách khỏi mật độ kim sa)
+    const computeIconGrid = () => {
+      const aspect = planeW / planeH;
+      if (aspect < 0.85) {
+        iconCols = 3;
+        iconRows = 5;
+      } else if (aspect < 1.25) {
+        iconCols = 4;
+        iconRows = 4;
+      } else if (aspect > 2.1) {
+        iconCols = 6;
+        iconRows = 3;
+      } else {
+        iconCols = 6;
+        iconRows = 4;
+      }
+    };
+
+    const disposeWall = () => {
       if (instancedMesh) {
         scene.remove(instancedMesh);
         instancedMesh.geometry.dispose();
         instancedMesh.dispose();
         instancedMesh = null;
       }
-
-      const aspect = planeW / planeH;
-
-      if (aspect < 0.85) {
-        // Mobile dọc: 3 cột x 5 hàng = 15 tấm trên toàn màn hình
-        cols = 3;
-        rows = 5;
-      } else if (aspect < 1.25) {
-        // Tablet / Vuông: 4 cột x 4 hàng = 16 tấm trên toàn màn hình
-        cols = 4;
-        rows = 4;
-      } else if (aspect > 2.1) {
-        // Màn hình Ultrawide: 6 cột x 3 hàng = 18 tấm trên toàn màn hình
-        cols = 6;
-        rows = 3;
-      } else {
-        // Desktop tiêu chuẩn (16:9 / 16:10): 6 cột x 4 hàng = 24 tấm (gấp đôi 12 tấm trước đây)
-        cols = 6;
-        rows = 4;
+      if (glintMesh) {
+        scene.remove(glintMesh);
+        glintMesh.geometry.dispose();
+        glintMesh.dispose();
+        glintMesh = null;
+        glintAttr = null;
       }
+    };
 
-      cellW = planeW / cols;
-      cellH = planeH / rows;
-      totalInstances = cols * rows;
+    /**
+     * Hex-packed lattice: hàng lẻ lệch nửa bước. Kích thước hạt theo tier (px màn hình).
+     */
+    const buildSequinWall = () => {
+      disposeWall();
+      computeIconGrid();
 
-      const instGeo = sequinGeo.clone();
-      const cellRectArray = new Float32Array(totalInstances * 4);
-      const tileSeedArray = new Float32Array(totalInstances * 3);
+      const pxToWorld = planeH / Math.max(1, window.innerHeight);
+      tileSize = tier.px * pxToWorld;
+      const pitchX = tileSize * 0.8660254;
+      const pitchY = tileSize * 0.75;
+      tileScale = tileSize * 0.95;
+
+      const nCols = Math.ceil(planeW / pitchX) + 3;
+      const nRows = Math.ceil(planeH / pitchY) + 3;
+      totalInstances = nCols * nRows;
+      uTileUv.value.set(tileScale / planeW, tileScale / planeH);
 
       originX = new Float32Array(totalInstances);
       originY = new Float32Array(totalInstances);
       normX = new Float32Array(totalInstances);
       normY = new Float32Array(totalInstances);
-      phaseArr = new Float32Array(totalInstances);
       speedArr = new Float32Array(totalInstances);
+      seedArr = new Float32Array(totalInstances);
       restRotX = new Float32Array(totalInstances);
       restRotY = new Float32Array(totalInstances);
-      restRotZ = new Float32Array(totalInstances);
       rotX = new Float32Array(totalInstances);
       rotY = new Float32Array(totalInstances);
-      rotZ = new Float32Array(totalInstances);
       velX = new Float32Array(totalInstances);
       velY = new Float32Array(totalInstances);
-      velZ = new Float32Array(totalInstances);
+      cooldown = new Float32Array(totalInstances);
       cellSplitDist = new Float32Array(totalInstances);
+
+      const instGeo = sequinGeo.clone();
+      const seedAttrArr = new Float32Array(totalInstances * 3);
+      const screenUvArr = new Float32Array(totalInstances * 2);
 
       instancedMesh = new THREE.InstancedMesh(instGeo, sequinMat, totalInstances);
       instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       instancedMesh.frustumCulled = false;
       instancedMesh.renderOrder = 1;
-
       const matArray = instancedMesh.instanceMatrix.array;
-      const uStep = 1.0 / cols;
-      const vStep = 1.0 / rows;
+
+      const glintGeoInst = glintGeo.clone();
+      glintAttr = new THREE.InstancedBufferAttribute(new Float32Array(totalInstances), 1);
+      glintAttr.setUsage(THREE.DynamicDrawUsage);
+      glintGeoInst.setAttribute("aGlint", glintAttr);
+      glintMesh = new THREE.InstancedMesh(glintGeoInst, glintMat, totalInstances);
+      glintMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      glintMesh.frustumCulled = false;
+      glintMesh.renderOrder = 20;
+      glintMesh.visible = tier.glints;
+      const glintMat16 = glintMesh.instanceMatrix.array;
+
       let idx = 0;
-
-      for (let r = 0; r < rows; r++) {
-        const py = -planeH * 0.5 + (r + 0.5) * cellH;
-        const ny = (r + 0.5) / rows;
-        const vMin = r * vStep;
-
-        for (let c = 0; c < cols; c++) {
-          const px = -planeW * 0.5 + (c + 0.5) * cellW;
-          const nx = (c + 0.5) / cols;
-          const uMin = c * uStep;
+      for (let r = 0; r < nRows; r++) {
+        const py = -planeH * 0.5 + (r - 1) * pitchY;
+        for (let c = 0; c < nCols; c++) {
+          const px = -planeW * 0.5 + (c - 1) * pitchX + (r % 2 ? pitchX * 0.5 : 0);
 
           originX[idx] = px;
           originY[idx] = py;
-          normX[idx] = nx;
-          normY[idx] = ny;
-
-          phaseArr[idx] = (c * 0.9 + r * 1.3) + Math.random() * 1.5;
+          normX[idx] = px / planeW + 0.5;
+          normY[idx] = py / planeH + 0.5;
           speedArr[idx] = 0.85 + Math.random() * 0.3;
-          cellSplitDist[idx] = Math.hypot(nx - 0.5, ny - 0.5);
 
-          // Mỗi tấm trong 8-12 tấm có góc nghiêng nghỉ tự nhiên hơi khác nhau để tạo các mảng sắc thái
-          // Holographic (Cyan, Hồng Phấn, Tím Lavender, Vàng Champagne) đa dạng như ảnh mẫu
-          const seed1 = ((c * 3 + r * 5) % 7) / 6.0;
-          const seed2 = ((c * 5 + r * 2) % 7) / 6.0;
-          const seed3 = Math.random();
+          const s1 = Math.random();
+          const s2 = Math.random();
+          const s3 = Math.random();
+          seedArr[idx] = s1;
 
-          restRotX[idx] = (seed1 - 0.5) * 0.08;
-          restRotY[idx] = (seed2 - 0.5) * 0.09;
-          restRotZ[idx] = (seed3 - 0.5) * 0.012;
+          // Nghiêng nghỉ liền mạch theo noise → các mảng sắc thái holographic như chất lỏng
+          restRotX[idx] = perlin3(px * 0.07, py * 0.07, 3.1) * 0.07 + (s2 - 0.5) * 0.03;
+          restRotY[idx] = perlin3(px * 0.07 + 40, py * 0.07, 7.7) * 0.08 + (s3 - 0.5) * 0.03;
 
-          const rOffset = idx * 4;
-          cellRectArray[rOffset + 0] = uMin;
-          cellRectArray[rOffset + 1] = vMin;
-          cellRectArray[rOffset + 2] = uStep;
-          cellRectArray[rOffset + 3] = vStep;
+          const sOff = idx * 3;
+          seedAttrArr[sOff] = s1;
+          seedAttrArr[sOff + 1] = s2;
+          seedAttrArr[sOff + 2] = s3;
+          screenUvArr[idx * 2] = normX[idx];
+          screenUvArr[idx * 2 + 1] = normY[idx];
 
-          const sOffset = idx * 3;
-          tileSeedArray[sOffset + 0] = seed1;
-          tileSeedArray[sOffset + 1] = seed2;
-          tileSeedArray[sOffset + 2] = seed3;
+          const m = idx * 16;
+          matArray[m + 0] = tileScale;
+          matArray[m + 5] = tileScale;
+          matArray[m + 10] = 1;
+          matArray[m + 12] = px;
+          matArray[m + 13] = py + tileScale * 0.4;
+          matArray[m + 15] = 1;
 
-          const mOffset = idx * 16;
-          matArray[mOffset + 0] = cellW;
-          matArray[mOffset + 5] = cellH;
-          matArray[mOffset + 10] = 1;
-          matArray[mOffset + 12] = px;
-          matArray[mOffset + 13] = py + cellH * 0.4;
-          matArray[mOffset + 15] = 1;
+          glintMat16[m + 0] = 0;
+          glintMat16[m + 5] = 0;
+          glintMat16[m + 10] = 1;
+          glintMat16[m + 12] = px;
+          glintMat16[m + 13] = py;
+          glintMat16[m + 14] = 1.0;
+          glintMat16[m + 15] = 1;
 
           idx++;
         }
       }
 
-      instGeo.setAttribute(
-        "aCellRect",
-        new THREE.InstancedBufferAttribute(cellRectArray, 4)
-      );
-      instGeo.setAttribute(
-        "aTileSeed",
-        new THREE.InstancedBufferAttribute(tileSeedArray, 3)
-      );
+      instGeo.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seedAttrArr, 3));
+      instGeo.setAttribute("aScreenUv", new THREE.InstancedBufferAttribute(screenUvArr, 2));
       instancedMesh.instanceMatrix.needsUpdate = true;
+      glintMesh.instanceMatrix.needsUpdate = true;
       scene.add(instancedMesh);
+      scene.add(glintMesh);
     };
+
+    const applyTier = (name) => {
+      tierName = name;
+      tier = tiers[name];
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, tier.ratio));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setPixelRatio(renderer.getPixelRatio());
+      composer.setSize(window.innerWidth, window.innerHeight);
+      buildSequinWall();
+    };
+
 
     updateBaseTextureCover();
     buildSequinWall();
@@ -1033,7 +849,7 @@ const XPPixelBackground = ({ active = true }) => {
 
     // Định vị từng Desktop Icon nằm gọn vào chính giữa từng tấm Kim Sa khi bật chế độ Kim Sa Gió
     const getIconTargetCells = () => {
-      if (cols >= 6) {
+      if (iconCols >= 6) {
         // Khớp bố cục 8 icon nằm gọn trong 8 tấm kim sa trung tâm (cột 1..4, hàng 1..2 tính từ trên xuống)
         return [
           { col: 1, rowFromTop: 1 }, // 0: My Computer
@@ -1046,7 +862,7 @@ const XPPixelBackground = ({ active = true }) => {
           { col: 2, rowFromTop: 1 }, // 7: ResQ Mien Trung
         ];
       }
-      if (cols === 4) {
+      if (iconCols === 4) {
         return [
           { col: 0, rowFromTop: 1 },
           { col: 3, rowFromTop: 1 },
@@ -1075,13 +891,13 @@ const XPPixelBackground = ({ active = true }) => {
       if (!iconEls || iconEls.length === 0) return;
 
       const targets = getIconTargetCells();
-      const tileScreenW = window.innerWidth / cols;
-      const tileScreenH = window.innerHeight / rows;
+      const tileScreenW = window.innerWidth / iconCols;
+      const tileScreenH = window.innerHeight / iconRows;
 
       iconEls.forEach((el, idx) => {
         const cell = targets[idx % targets.length];
-        const clampedRow = Math.min(rows - 1, Math.max(0, cell.rowFromTop));
-        const clampedCol = Math.min(cols - 1, Math.max(0, cell.col));
+        const clampedRow = Math.min(iconRows - 1, Math.max(0, cell.rowFromTop));
+        const clampedCol = Math.min(iconCols - 1, Math.max(0, cell.col));
 
         const targetScreenX = (clampedCol + 0.5) * tileScreenW;
         const targetScreenY = (clampedRow + 0.53) * tileScreenH;
@@ -1144,6 +960,15 @@ const XPPixelBackground = ({ active = true }) => {
     const splitIntoSequinWall = (worldX = 0, worldY = 0) => {
       gsapState.isSplit = true;
       setIsSequinWall(true);
+      pointer.isInside = true;
+      pointer.worldX = worldX;
+      pointer.worldY = worldY;
+      pointer.targetWorldX = worldX;
+      pointer.targetWorldY = worldY;
+      for (let k = 0; k < 4; k++) {
+        trailFollowers[k].x = worldX;
+        trailFollowers[k].y = worldY;
+      }
       computeSplitDistancesFromWorld(worldX, worldY);
       alignDesktopIconsToSequins(true);
 
@@ -1275,6 +1100,10 @@ const XPPixelBackground = ({ active = true }) => {
         pointer.prevWorldX = wx;
         pointer.prevWorldY = wy;
         pointer.hasPrev = true;
+        for (let k = 0; k < 4; k++) {
+          trailFollowers[k].x = wx;
+          trailFollowers[k].y = wy;
+        }
 
         if (gsapState.isSplit) {
           gsapCtx.add(() => {
@@ -1389,6 +1218,7 @@ const XPPixelBackground = ({ active = true }) => {
     };
 
     window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("mousemove", onPointerMove, { passive: true });
     window.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("mouseout", onPointerLeave);
@@ -1407,8 +1237,10 @@ const XPPixelBackground = ({ active = true }) => {
       camera.updateProjectionMatrix();
       calcFrustumPlane();
 
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, tier.ratio));
       renderer.setSize(w, h);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      composer.setPixelRatio(renderer.getPixelRatio());
+      composer.setSize(w, h);
 
       baseWallpaperMesh.scale.set(planeW, planeH, 1);
       backplateMesh.scale.set(planeW, planeH, 1);
@@ -1427,6 +1259,14 @@ const XPPixelBackground = ({ active = true }) => {
     // ============================================================================
     let animId = null;
     let prevTime = performance.now();
+
+    // 4 nguồn sáng chạy sau đuôi cursor với tốc độ bám (lerp) và bán kính khác nhau
+    const trailFollowers = [
+      { x: 0, y: 0, lerpSpd: 0.32, rad: 6.5, scale: 2.2 },
+      { x: 0, y: 0, lerpSpd: 0.22, rad: 8.0, scale: 2.5 },
+      { x: 0, y: 0, lerpSpd: 0.14, rad: 9.5, scale: 2.8 },
+      { x: 0, y: 0, lerpSpd: 0.08, rad: 11.0, scale: 3.2 },
+    ];
 
     const animate = (now) => {
       if (!isRunningRef.current) return;
@@ -1453,10 +1293,6 @@ const XPPixelBackground = ({ active = true }) => {
       uLightColor.value.setRGB(gsapState.lightR, gsapState.lightG, gsapState.lightB);
       uLightStrength.value = gsapState.lightIntensity;
 
-      cursorLight.position.set(pointer.worldX, pointer.worldY, 26.0);
-      cursorLight.intensity = gsapState.lightIntensity * 45.0;
-      cursorLight.color.setRGB(gsapState.lightR, gsapState.lightG, gsapState.lightB);
-
       const globalSplit = gsapState.splitProgress;
       uSplitAmount.value = globalSplit;
 
@@ -1464,216 +1300,333 @@ const XPPixelBackground = ({ active = true }) => {
       baseMat.opacity = flatOpacity;
       baseWallpaperMesh.visible = flatOpacity > 0.005;
 
+      // Cập nhật 4 nguồn sáng chạy sau đuôi của cursor
+      const mouseSpeedRatio = Math.min(moveSpeed / 10.0, 1.0);
+      const targetOrbAlpha = pointer.isInside && globalSplit > 0.05 ? (0.70 + 0.30 * mouseSpeedRatio) : 0.0;
+
+      for (let k = 0; k < 4; k++) {
+        const tf = trailFollowers[k];
+
+        // Quỹ đạo trôi bay mềm mại quanh cursor + vệt kéo dài theo gia tốc di chuyển của chuột
+        const angle = elapsed * (1.8 + k * 0.45) + (k * 1.57);
+        const orbitR = 1.0 + k * 0.75;
+        const orbitX = Math.cos(angle) * orbitR;
+        const orbitY = Math.sin(angle) * orbitR;
+        const lagX = -pointer.velX * (k + 1) * 4.5;
+        const lagY = -pointer.velY * (k + 1) * 4.5;
+
+        const targetX = pointer.worldX + lagX + orbitX;
+        const targetY = pointer.worldY + lagY + orbitY;
+
+        tf.x = THREE.MathUtils.lerp(tf.x, targetX, tf.lerpSpd);
+        tf.y = THREE.MathUtils.lerp(tf.y, targetY, tf.lerpSpd);
+
+        // Uniform truyền vào shader để chiếu sáng & tạo vệt specular trên các lá kim sa
+        uTrailLights.value[k].set(tf.x, tf.y, tf.rad, targetOrbAlpha * (1.0 - k * 0.12));
+
+        // Cập nhật đốm sáng phát quang visual orbs
+        const orb = trailOrbs[k];
+        if (orb) {
+          orb.mesh.position.set(tf.x, tf.y, 1.2);
+          const orbSz = tf.scale * (0.85 + 0.30 * Math.sin(elapsed * 5.0 + k * 2.0));
+          orb.mesh.scale.set(orbSz, orbSz, 1.0);
+          orb.mat.uniforms.uAlpha.value = targetOrbAlpha * (1.0 - k * 0.12);
+          orb.mesh.visible = targetOrbAlpha > 0.005;
+        }
+      }
+
+      // Ánh sáng ảo trôi chậm + môi trường xoay chậm (quét vệt sáng lóa qua bề mặt)
+      {
+        const lx = Math.cos(elapsed * 0.17) * (planeW * 0.35);
+        const ly = Math.sin(elapsed * 0.13) * (planeH * 0.25) + (planeH * 0.10);
+        uLightPos.value.set(lx, ly, 45.0);
+        uLightDir.value.copy(uLightPos.value).normalize();
+        uEnvRot.value = elapsed * 0.012 + (pointer.worldX / Math.max(1, planeW)) * 0.05;
+      }
+
       if (instancedMesh && totalInstances > 0) {
         const matArray = instancedMesh.instanceMatrix.array;
+        const glintArr = glintAttr.array;
+        const glintMat16 = glintMesh.instanceMatrix.array;
         const windAmp = gsapState.windStrength;
         const mouseSens = gsapState.mouseSensitivity;
+        const glintsOn = tier.glints && globalSplit > 0.5;
 
-        // Bán kính tương tác chuột gọn gàng để không làm rung lắc các tấm xung quanh
-        const avgCell = (cellW + cellH) * 0.5;
-        const interactRadius = avgCell * 0.68;
-        const interactRadiusSq = interactRadius * interactRadius;
+        // Tính toán vector lướt chuột của khung hình hiện tại
+        const frameDist = Math.hypot(moveDX, moveDY);
+        const segLenSq = moveDX * moveDX + moveDY * moveDY;
+        const isMoving = pointer.isInside && mouseSens > 0.01 && frameDist > 0.003;
+        const invDist = frameDist > 0.0001 ? 1.0 / frameDist : 0.0;
+        const swipeDirX = moveDX * invDist;
+        const swipeDirY = moveDY * invDist;
+        const swipeSpeedRatio = THREE.MathUtils.clamp(moveSpeed / 6.0, 0.6, 2.5);
+
+        const coreR = tileSize * 1.30;
+        const rippleR = tileSize * 4.0;
+        const hoverR = tileSize * 2.5;
+
+        // Cập nhật vệt chuột: thêm đoạn mới, giảm tuổi thọ, loại đoạn đã tắt
+        if (pointer.isInside && mouseSens > 0.01 && moveSpeed > 0.20) {
+          const spd = Math.hypot(moveDX, moveDY) / Math.max(0.004, dt);
+          const inv = spd > 0.0001 ? 1.0 / (spd * dt) : 0.0;
+          trail.push({
+            x1: prevWX,
+            y1: prevWY,
+            x2: pointer.worldX,
+            y2: pointer.worldY,
+            dx: moveDX * inv * dt,
+            dy: moveDY * inv * dt,
+            sp: Math.min(spd / planeH, 3.0),
+            life: 1.0,
+          });
+          if (trail.length > TRAIL_MAX) trail.shift();
+        }
+        for (let t = trail.length - 1; t >= 0; t--) {
+          trail[t].life -= dt * 3.2;
+          if (trail[t].life <= 0) trail.splice(t, 1);
+        }
 
         const swActive = gsapState.shockwaveStrength > 0.005;
         const swX = gsapState.shockwaveX;
         const swY = gsapState.shockwaveY;
         const swRad = gsapState.shockwaveRadius;
-        const swBand = avgCell * 0.85;
+        const swBand = tileSize * 4.0;
         const swStr = gsapState.shockwaveStrength;
 
-        // Hệ số nội suy mượt (overdamped) giúp tấm kim sa nghiêng êm ái, không bị bật nảy rung lắc qua lại
-        const smoothFollow = 1.0 - Math.exp(-8.5 * dt);
-        const damping = Math.pow(0.0025, dt);
+        const K_SPRING = 44.0;
+        const C_DAMP = 3.6;
+        const MAX_W = 65.0;
 
-        const segVX = pointer.worldX - prevWX;
-        const segVY = pointer.worldY - prevWY;
-        const segLenSq = segVX * segVX + segVY * segVY;
-        const hasMouseMotion = pointer.isInside && mouseSens > 0.01 && moveSpeed > 0.35;
+        // Vector nửa (half vector) giữa ánh sáng ảo và hướng nhìn để tìm điểm bắt sáng trực diện
+        const Lx = uLightDir.value.x;
+        const Ly = uLightDir.value.y;
+        const Lz = uLightDir.value.z;
+        const camZ = camera.position.z;
 
         for (let i = 0; i < totalInstances; i++) {
           const cellDelay = cellSplitDist[i] * 0.38;
-          const localSplit = THREE.MathUtils.clamp(
-            (globalSplit * 1.38 - cellDelay) / 1.0,
-            0.0,
-            1.0
-          );
+          const localSplit = THREE.MathUtils.clamp(globalSplit * 1.38 - cellDelay, 0.0, 1.0);
 
           const ox = originX[i];
           const oy = originY[i];
+          const m = i * 16;
 
           if (localSplit <= 0.001 && !swActive) {
-            const mOffset = i * 16;
-            matArray[mOffset + 0] = cellW;
-            matArray[mOffset + 1] = 0;
-            matArray[mOffset + 2] = 0;
-            matArray[mOffset + 4] = 0;
-            matArray[mOffset + 5] = cellH;
-            matArray[mOffset + 6] = 0;
-            matArray[mOffset + 8] = 0;
-            matArray[mOffset + 9] = 0;
-            matArray[mOffset + 10] = 1;
-            matArray[mOffset + 12] = ox;
-            matArray[mOffset + 13] = oy + cellH * 0.4;
-            matArray[mOffset + 14] = 0;
+            rotX[i] = 0;
+            rotY[i] = 0;
+            velX[i] = 0;
+            velY[i] = 0;
+            matArray[m + 0] = tileScale;
+            matArray[m + 1] = 0;
+            matArray[m + 2] = 0;
+            matArray[m + 4] = 0;
+            matArray[m + 5] = tileScale;
+            matArray[m + 6] = 0;
+            matArray[m + 8] = 0;
+            matArray[m + 9] = 0;
+            matArray[m + 10] = 1;
+            matArray[m + 12] = ox;
+            matArray[m + 13] = oy + tileScale * 0.4;
+            matArray[m + 14] = 0;
+            glintMat16[m + 0] = 0;
+            glintMat16[m + 5] = 0;
+            glintArr[i] = 0;
             continue;
           }
 
-          const nx = normX[i];
-          const ny = normY[i];
-          const phase = phaseArr[i];
           const spd = speedArr[i];
 
-          // --- A. GIÓ NỀN NHẸ NHÀNG + ĐỘ NGHIÊNG TĨNH ĐẶC TRƯNG CỦA TỪNG TẤM ---
-          const wave1 = Math.sin(nx * 3.6 - elapsed * 1.05 * spd + ny * 2.6 + phase);
-          const wave2 = Math.cos(nx * 2.8 + ny * 3.4 - elapsed * 0.85 * spd + phase * 0.7);
-          const gust = Math.sin((nx + ny) * 3.0 - elapsed * 1.2 + Math.sin(elapsed * 0.4 + nx * 2.2));
+          // --- A. GIÓ NỀN PERLIN + ĐỘ NGHIÊNG TĨNH ---
+          const eff = windAmp * localSplit;
+          const n1 = perlin3(ox * 0.04, oy * 0.04, elapsed * 0.25 * spd);
+          const n2 = perlin3(ox * 0.04 + 17.3, oy * 0.04 + 4.1, elapsed * 0.25 * spd + 9.0);
+          const n3 = perlin3(ox * 0.11, oy * 0.11, elapsed * 0.6 + 31.0) * 0.4;
+          let targetX = restRotX[i] * localSplit + (n1 + n3) * 0.11 * eff;
+          let targetY = restRotY[i] * localSplit + (n2 + n3 * 0.5) * 0.13 * eff;
 
-          const effectiveWind = windAmp * localSplit;
-          let targetX = restRotX[i] * localSplit + (wave1 * 0.032 + gust * 0.016) * effectiveWind;
-          let targetY = restRotY[i] * localSplit + (wave2 * 0.036 + gust * 0.018) * effectiveWind;
-          let targetZ = restRotZ[i] * localSplit + Math.sin(elapsed * 0.95 * spd + phase) * 0.006 * effectiveWind;
-
-          // --- B. TƯƠNG TÁC TRỎ CHUỘT: ĐÈ NGHIÊNG VỀ GÓC CHUỘT + LƯỚT ÊM DỊU (ÍT RUNG LẮC) ---
-          if (pointer.isInside && mouseSens > 0.01) {
-            // 1. Hiệu ứng chuột đang đè lên tấm kim sa nào thì tấm đó nghiêng mượt về hướng/góc đang trỏ:
-            // Chuột càng ở sát mép hoặc góc của tấm kim sa thì độ nghiêng về góc đó càng rõ.
-            const relX = (pointer.worldX - ox) / (cellW * 0.5);
-            const relY = (pointer.worldY - oy) / (cellH * 0.5);
-
-            if (Math.abs(relX) < 1.15 && Math.abs(relY) < 1.15) {
-              const inTileX = 1.0 - THREE.MathUtils.smoothstep(Math.abs(relX), 0.90, 1.15);
-              const inTileY = 1.0 - THREE.MathUtils.smoothstep(Math.abs(relY), 0.90, 1.15);
-              const hoverWeight = inTileX * inTileY * mouseSens * localSplit;
-
-              const cx = THREE.MathUtils.clamp(relX, -1.0, 1.0);
-              const cy = THREE.MathUtils.clamp(relY, -1.0, 1.0);
-
-              // Hệ số khuếch đại khi chuột nằm ở mép hoặc góc của tấm kim sa
-              const edgeDist = Math.hypot(cx, cy);
-              const cornerBoost = 1.0 + 0.55 * edgeDist + 0.75 * Math.abs(cx * cy);
-
-              const hoverTiltX = (-cy * 0.17 * cornerBoost - 0.02) * hoverWeight;
-              const hoverTiltY = (cx * 0.19 * cornerBoost) * hoverWeight;
-              const hoverTiltZ = (-cx * cy * 0.026) * hoverWeight;
-
-              targetX += hoverTiltX;
-              targetY += hoverTiltY;
-              targetZ += hoverTiltZ;
-            }
-
-            // 2. Hiệu ứng lướt chuột qua rất nhẹ (hạn chế tối đa rung lắc dư thừa)
-            let closestX = pointer.worldX;
-            let closestY = pointer.worldY;
-            if (segLenSq > 0.0001) {
-              const t = THREE.MathUtils.clamp(
-                ((ox - prevWX) * segVX + (oy - prevWY) * segVY) / segLenSq,
-                0.0,
-                1.0
-              );
-              closestX = prevWX + t * segVX;
-              closestY = prevWY + t * segVY;
-            }
-
-            const dx = ox - closestX;
-            const dy = oy - closestY;
-            const distSq = dx * dx + dy * dy;
-
-            if (distSq < interactRadiusSq && hasMouseMotion) {
-              const dist = Math.sqrt(distSq);
-              const proximity = 1.0 - dist / interactRadius;
-              const falloff = proximity * proximity * mouseSens * localSplit;
-
-              const pushX = THREE.MathUtils.clamp(-pointer.velY * 0.12, -0.07, 0.07);
-              const pushY = THREE.MathUtils.clamp(pointer.velX * 0.14, -0.08, 0.08);
-              const pushZ = THREE.MathUtils.clamp(-pointer.velX * 0.015, -0.015, 0.015);
-
-              velX[i] += pushX * falloff * 1.4 * dt;
-              velY[i] += pushY * falloff * 1.4 * dt;
-              velZ[i] += pushZ * falloff * 1.0 * dt;
+          // Gió giật mạnh: lật hẳn tấm để lộ mặt sau (có thời gian hồi)
+          cooldown[i] -= dt;
+          if (eff > 0.5 && cooldown[i] <= 0) {
+            const g = perlin3(ox * 0.03 + 100.0, oy * 0.03, elapsed * 0.35 + 50.0);
+            if (g > 0.5) {
+              velY[i] += (n2 >= 0 ? 1 : -1) * (14.0 + (g - 0.5) * 20.0);
+              cooldown[i] = 4.0 + seedArr[i] * 5.0;
             }
           }
 
-          // --- C. SÓNG XUNG KÍCH NHẸ KHI CLICK CHUỘT ---
+          // --- B. TƯƠNG TÁC CHUỘT: XOAY LẬT TẠI VỊ TRÍ CHUỘT & GỢN NHẸ Ở CÁC TẤM CẠNH ĐÓ ---
+          if (pointer.isInside && mouseSens > 0.01) {
+            // Khoảng cách tới đường quét chuột tức thời của khung hình hiện tại
+            let cx = pointer.worldX;
+            let cy = pointer.worldY;
+            if (segLenSq > 0.0001) {
+              const tt = THREE.MathUtils.clamp(
+                ((ox - prevWX) * moveDX + (oy - prevWY) * moveDY) / segLenSq,
+                0.0,
+                1.0
+              );
+              cx = prevWX + tt * moveDX;
+              cy = prevWY + tt * moveDY;
+            }
+            const dxCur = ox - cx;
+            const dyCur = oy - cy;
+            const distCur = Math.hypot(dxCur, dyCur);
+
+            if (isMoving) {
+              if (distCur < coreR) {
+                // VÙNG CHUỘT LƯỚT QUA TRỰC TIẾP: XOAY LẬT VÒNG (FLIP 3D)
+                const coreFrac = 1.0 - distCur / coreR;
+                const flipImpulse = (48.0 + seedArr[i] * 20.0) * swipeSpeedRatio * (coreFrac * 0.7 + 0.3) * mouseSens * localSplit;
+                velY[i] += swipeDirX * flipImpulse * (0.85 + 0.3 * seedArr[i]);
+                velX[i] += -swipeDirY * flipImpulse * 0.65;
+                velY[i] += (seedArr[i] > 0.5 ? 1 : -1) * flipImpulse * 0.22;
+              } else if (distCur < rippleR) {
+                // VÙNG CÁC TẤM CẠNH ĐÓ: GỢN NHẸ (GENTLE RIPPLE)
+                const rippleFrac = 1.0 - (distCur - coreR) / (rippleR - coreR);
+                const rippleW = rippleFrac * rippleFrac;
+                const rippleImpulse = (6.5 + 4.5 * Math.min(moveSpeed / 8.0, 1.2)) * rippleW * mouseSens * localSplit;
+                velY[i] += swipeDirX * rippleImpulse * 0.75;
+                velX[i] += -swipeDirY * rippleImpulse * 0.75;
+                targetY += swipeDirX * 0.16 * rippleW * localSplit;
+                targetX += -swipeDirY * 0.16 * rippleW * localSplit;
+              }
+            } else {
+              // Khi chuột đứng yên: nghiêng từ tính nhẹ về phía con trỏ
+              if (distCur < hoverR) {
+                const hFrac = 1.0 - distCur / hoverR;
+                const f = hFrac * hFrac * mouseSens * localSplit;
+                targetY += ((pointer.worldX - ox) / hoverR) * 0.20 * f;
+                targetX += (-(pointer.worldY - oy) / hoverR) * 0.20 * f;
+              }
+            }
+
+            // Gợn sóng tiếp nối theo đuôi các vệt chuột trước đó
+            for (let t = 0; t < trail.length; t++) {
+              const s = trail[t];
+              const sx = s.x2 - s.x1;
+              const sy = s.y2 - s.y1;
+              const sLenSq = sx * sx + sy * sy;
+              let tcx = s.x2;
+              let tcy = s.y2;
+              if (sLenSq > 0.0001) {
+                const tt = THREE.MathUtils.clamp(
+                  ((ox - s.x1) * sx + (oy - s.y1) * sy) / sLenSq,
+                  0.0,
+                  1.0
+                );
+                tcx = s.x1 + tt * sx;
+                tcy = s.y1 + tt * sy;
+              }
+              const tDist = Math.hypot(ox - tcx, oy - tcy);
+              if (tDist < rippleR) {
+                const tw = (1.0 - tDist / rippleR) * s.life;
+                velY[i] += s.dx * tw * 14.0 * mouseSens * localSplit * dt;
+                velX[i] += -s.dy * tw * 14.0 * mouseSens * localSplit * dt;
+              }
+            }
+          }
+
+          // --- C. SÓNG XUNG KÍCH KHI CLICK ---
           if (swActive) {
             const sdx = ox - swX;
             const sdy = oy - swY;
             const sDist = Math.hypot(sdx, sdy);
             const ringDelta = Math.abs(sDist - swRad);
-
             if (ringDelta < swBand) {
               const ringFactor = (1.0 - ringDelta / swBand) * swStr;
-              const invSDist = sDist > 0.001 ? 1.0 / sDist : 0.0;
-              velX[i] += (-0.08 + (sdy * invSDist) * 0.07) * ringFactor * 3.5 * dt;
-              velY[i] += (sdx * invSDist) * 0.10 * ringFactor * 3.5 * dt;
+              const invS = sDist > 0.001 ? 1.0 / sDist : 0.0;
+              velX[i] += -sdy * invS * ringFactor * 420.0 * dt;
+              velY[i] += sdx * invS * ringFactor * 420.0 * dt;
             }
           }
 
-          // --- D. NỘI SUY ÊM MƯỢT VỀ GÓC MỤC TIÊU (KHÔNG RUNG LẮC QUA LẠI) ---
-          velX[i] *= damping;
-          velY[i] *= damping;
-          velZ[i] *= damping;
+          // --- D. LÒ XO TẮT DẦN (spring / elastic), KHÔNG GIỚI HẠN GÓC ĐỂ LẬT ĐƯỢC 2 MẶT ---
+          velX[i] += (-K_SPRING * (rotX[i] - targetX) - C_DAMP * velX[i]) * dt;
+          velY[i] += (-K_SPRING * (rotY[i] - targetY) - C_DAMP * velY[i]) * dt;
+          velX[i] = THREE.MathUtils.clamp(velX[i], -MAX_W, MAX_W);
+          velY[i] = THREE.MathUtils.clamp(velY[i], -MAX_W, MAX_W);
+          rotX[i] += velX[i] * dt;
+          rotY[i] += velY[i] * dt;
 
-          const rx = THREE.MathUtils.clamp(
-            THREE.MathUtils.lerp(rotX[i], targetX, smoothFollow) + velX[i],
-            -0.34,
-            0.34
-          );
-          const ry = THREE.MathUtils.clamp(
-            THREE.MathUtils.lerp(rotY[i], targetY, smoothFollow) + velY[i],
-            -0.34,
-            0.34
-          );
-          const rz = THREE.MathUtils.clamp(
-            THREE.MathUtils.lerp(rotZ[i], targetZ, smoothFollow) + velZ[i],
-            -0.06,
-            0.06
-          );
+          const rx = rotX[i];
+          const ry = rotY[i];
+          const a = Math.cos(rx);
+          const b = Math.sin(rx);
+          const c = Math.cos(ry);
+          const d = Math.sin(ry);
 
-          rotX[i] = rx;
-          rotY[i] = ry;
-          rotZ[i] = rz;
+          matArray[m + 0] = c * tileScale;
+          matArray[m + 1] = b * d * tileScale;
+          matArray[m + 2] = -a * d * tileScale;
+          matArray[m + 3] = 0;
+          matArray[m + 4] = 0;
+          matArray[m + 5] = a * tileScale;
+          matArray[m + 6] = b * tileScale;
+          matArray[m + 7] = 0;
+          matArray[m + 8] = d;
+          matArray[m + 9] = -b * c;
+          matArray[m + 10] = a * c;
+          matArray[m + 11] = 0;
+          matArray[m + 12] = ox;
+          matArray[m + 13] = oy + tileScale * 0.4;
+          matArray[m + 14] = 0;
+          matArray[m + 15] = 1;
 
-          // Thu nhỏ 1.6% mỗi tấm để các tấm kim sa nằm sát nhau hơn, chỉ chừa khe mảnh tinh tế
-          const scaleFactor = 1.0 - 0.016 * localSplit;
-          const tileW = cellW * scaleFactor;
-          const tileH = cellH * scaleFactor;
-
-          const a = Math.cos(rx), b = Math.sin(rx);
-          const c = Math.cos(ry), d = Math.sin(ry);
-          const e = Math.cos(rz), f = Math.sin(rz);
-
-          const ae = a * e, af = a * f, be = b * e, bf = b * f;
-
-          const mOffset = i * 16;
-          // Column 0 (X-axis * tileW)
-          matArray[mOffset + 0] = c * e * tileW;
-          matArray[mOffset + 1] = (b * d * e + af) * tileW;
-          matArray[mOffset + 2] = (-a * d * e + bf) * tileW;
-          matArray[mOffset + 3] = 0;
-
-          // Column 1 (Y-axis * tileH)
-          matArray[mOffset + 4] = -c * f * tileH;
-          matArray[mOffset + 5] = (-b * d * f + ae) * tileH;
-          matArray[mOffset + 6] = (a * d * f + be) * tileH;
-          matArray[mOffset + 7] = 0;
-
-          // Column 2 (Z-axis / Surface Normal * 1.0)
-          matArray[mOffset + 8] = d;
-          matArray[mOffset + 9] = -b * c;
-          matArray[mOffset + 10] = a * c;
-          matArray[mOffset + 11] = 0;
-
-          // Column 3 (Translation: Tâm xoay đặt cố định tại đúng vị trí đinh ghim y = oy + tileH * 0.40)
-          matArray[mOffset + 12] = ox;
-          matArray[mOffset + 13] = oy + tileH * 0.4;
-          matArray[mOffset + 14] = 0;
-          matArray[mOffset + 15] = 1;
+          // --- E. TIA SAO 4 CÁNH: chỉ tối đa ~7 vị trí rải rác toàn màn hình (không bao giờ trùng lặp/xếp chồng) ---
+          let glint = 0.0;
+          const isGlintCandidate = ((i * 37) % 180 === 0);
+          if (glintsOn && isGlintCandidate && a * c > 0.3) {
+            const vx = -ox;
+            const vy = -oy;
+            const vz = camZ;
+            const vl = Math.hypot(vx, vy, vz);
+            let hx = Lx + vx / vl;
+            let hy = Ly + vy / vl;
+            let hz = Lz + vz / vl;
+            const hl = Math.hypot(hx, hy, hz);
+            hx /= hl;
+            hy /= hl;
+            hz /= hl;
+            const nh = d * hx + -b * c * hy + a * c * hz;
+            if (nh > 0.96) {
+              const spec = Math.pow((nh - 0.96) / 0.04, 3.0);
+              const flick = 0.5 + 0.5 * Math.sin(elapsed * (3.5 + seedArr[i] * 4.0) + seedArr[i] * 50.0);
+              glint = spec * flick * localSplit;
+            }
+          }
+          if (glint > 0.08) {
+            const size = tileSize * (0.40 + 0.45 * Math.min(glint, 1.0));
+            glintMat16[m + 0] = size;
+            glintMat16[m + 5] = size;
+            glintArr[i] = Math.min(glint * 0.8, 1.0);
+          } else {
+            glintMat16[m + 0] = 0;
+            glintMat16[m + 5] = 0;
+            glintArr[i] = 0;
+          }
         }
 
         instancedMesh.instanceMatrix.needsUpdate = true;
+        glintMesh.instanceMatrix.needsUpdate = true;
+        glintAttr.needsUpdate = true;
       }
 
-      renderer.render(scene, camera);
+      // Tự hạ chất lượng khi khung hình chậm kéo dài (sau khi đã tách kim sa)
+      if (gsapState.isSplit && tierName !== "low") {
+        frameEma += (dt * 1000 - frameEma) * 0.05;
+        slowFrames = frameEma > 26 ? slowFrames + 1 : 0;
+        if (slowFrames > 120) {
+          slowFrames = 0;
+          frameEma = 16;
+          applyTier(tierName === "high" ? "medium" : "low");
+        }
+      }
+
+      if (tier.bloom) {
+        composer.render(dt);
+      } else {
+        renderer.render(scene, camera);
+      }
       animId = requestAnimationFrame(animate);
     };
 
@@ -1712,6 +1665,7 @@ const XPPixelBackground = ({ active = true }) => {
       gsapCtx.revert();
 
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("mousemove", onPointerMove);
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("mouseout", onPointerLeave);
@@ -1720,20 +1674,26 @@ const XPPixelBackground = ({ active = true }) => {
       window.removeEventListener("touchend", onPointerUp);
       window.removeEventListener("resize", onResize);
 
-      if (instancedMesh) {
-        scene.remove(instancedMesh);
-        instancedMesh.geometry.dispose();
-        instancedMesh.dispose();
-      }
+      disposeWall();
       sequinGeo.dispose();
       sequinMat.dispose();
+      glintGeo.dispose();
+      glintMat.dispose();
+      orbGeo.dispose();
+      trailOrbs.forEach(({ mesh, mat }) => {
+        trailOrbsGroup.remove(mesh);
+        mat.dispose();
+      });
+      scene.remove(trailOrbsGroup);
       baseGeo.dispose();
       baseMat.dispose();
       backplateGeo.dispose();
       backplateMat.dispose();
       if (blissTexture) blissTexture.dispose();
       if (cursorAtlasTex) cursorAtlasTex.dispose();
-      if (envRT) envRT.dispose();
+      envTex.dispose();
+      normalTex.dispose();
+      composer.dispose();
 
       renderer.dispose();
     };

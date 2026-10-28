@@ -3,6 +3,7 @@ import useLocationStore from "#store/location";
 import useWindowStore from "#store/window";
 import { useGSAP } from "@gsap/react";
 import clsx from "clsx";
+import gsap from "gsap";
 import { Draggable } from "gsap/Draggable";
 
 import useThemeStore from "#store/theme";
@@ -24,10 +25,14 @@ const Home = () => {
 
   useGSAP(() => {
     if (is2077) return;
-    const instances = Draggable.create(".folder, .xp-desktop-item");
-    return () => {
-      instances.forEach((inst) => inst.kill());
-    };
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 640px)", () => {
+      const instances = Draggable.create(".folder, .xp-desktop-item");
+      return () => {
+        instances.forEach((inst) => inst.kill());
+      };
+    });
+    return () => mm.revert();
   }, [is2077, is2004]);
 
   if (is2077) return null;
@@ -109,7 +114,7 @@ const Home = () => {
     return (
       <section
         id="xp-home"
-        className="absolute inset-0 p-3 sm:p-6 pt-20 sm:pt-7 pointer-events-none select-none z-10 font-['Tahoma',sans-serif] overflow-y-auto sm:overflow-visible pb-12 sm:pb-0"
+        className="absolute inset-0 p-3 sm:p-6 pt-24 sm:pt-7 pointer-events-none select-none z-10 font-['Tahoma',sans-serif] overflow-y-auto sm:overflow-visible pb-14 sm:pb-0"
       >
         <div className="grid grid-cols-3 sm:grid-flow-col sm:grid-rows-3 gap-y-4 sm:gap-y-7 gap-x-2 sm:gap-x-6 w-full sm:w-fit max-w-[380px] sm:max-w-none mx-auto sm:mx-0 pointer-events-auto">
           {xpDesktopItems.map((item) => (
@@ -134,39 +139,47 @@ const Home = () => {
   }
 
   return (
-    <section id="home" className="pointer-events-none">
-      <ul>
-        {projects.map((project) => (
-          <li
-            key={project.id}
-            className={clsx(
-              "group folder cursor-pointer w-28 flex flex-col items-center pointer-events-auto",
-              project.windowPosition
-            )}
-            onClick={() => handleOpenProjectFinder(project)}
-          >
-            <img
-              src="/images/folder.png"
-              alt={project.name}
+    <section
+      id="home"
+      className="pointer-events-none max-sm:fixed max-sm:inset-x-0 max-sm:top-[57dvh] max-sm:bottom-[82px] max-sm:flex max-sm:items-center max-sm:justify-center max-sm:px-6 max-sm:z-20"
+    >
+      <ul className="max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-10 max-sm:gap-y-4 max-sm:w-full max-sm:max-w-[320px] max-sm:place-items-center">
+        {projects.map((project) => {
+          const hasWebsiteSuffix = project.name.endsWith(" Website");
+
+          return (
+            <li
+              key={project.id}
               className={clsx(
-                "transition-transform group-hover:scale-105",
-                is2077 && "drop-shadow-[0_0_8px_rgba(0,240,255,0.4)]"
+                "group folder cursor-pointer max-sm:w-full sm:w-28 flex flex-col items-center justify-start pointer-events-auto max-sm:active:scale-95 transition-transform",
+                project.windowPosition
               )}
-            />
-            <p
-              className={clsx(
-                "text-xs text-center px-1.5 py-0.5 mt-1 max-w-36 transition-all select-none",
-                is2077
-                  ? "text-[#00f0ff] font-mono bg-[#021020]/80 border border-[#00f0ff]/30 group-hover:bg-[#00f0ff] group-hover:text-black group-hover:border-[#00f0ff]"
-                  : isDark2026
-                  ? "text-white font-sans font-medium [text-shadow:0_1px_4px_rgba(0,0,0,0.85)] group-hover:text-white"
-                  : "text-neutral-800 font-sans font-medium [text-shadow:0_1px_2px_rgba(0,0,0,0.15)] group-hover:text-neutral-950"
-              )}
+              onClick={() => handleOpenProjectFinder(project)}
             >
-              {project.name}
-            </p>
-          </li>
-        ))}
+              <img
+                src="/images/folder.png"
+                alt={project.name}
+                className={clsx(
+                  "w-14 sm:w-16 h-auto transition-transform group-hover:scale-105 max-sm:drop-shadow-[0_3px_6px_rgba(0,0,0,0.12)]",
+                  is2077 && "drop-shadow-[0_0_8px_rgba(0,240,255,0.4)]"
+                )}
+              />
+              <p
+                className={clsx(
+                  "text-xs text-center px-1.5 py-0.5 mt-1 max-sm:leading-snug sm:max-w-36 transition-all select-none",
+                  hasWebsiteSuffix ? "max-sm:max-w-[100px]" : "max-sm:whitespace-nowrap",
+                  is2077
+                    ? "text-[#00f0ff] font-mono bg-[#021020]/80 border border-[#00f0ff]/30 group-hover:bg-[#00f0ff] group-hover:text-black group-hover:border-[#00f0ff]"
+                    : isDark2026
+                    ? "text-white font-sans font-medium [text-shadow:0_1px_4px_rgba(0,0,0,0.85)] group-hover:text-white"
+                    : "text-neutral-800 font-sans font-medium [text-shadow:0_1px_2px_rgba(0,0,0,0.15)] group-hover:text-neutral-950"
+                )}
+              >
+                {project.name}
+              </p>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

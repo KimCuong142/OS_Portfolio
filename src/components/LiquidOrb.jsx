@@ -1825,8 +1825,8 @@ const LiquidOrb = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-20 flex items-center justify-center pointer-events-none select-none">
-      <div className="relative w-[220px] h-[220px] sm:w-[290px] sm:h-[290px] md:w-[330px] md:h-[330px] flex items-center justify-center">
+    <div className="fixed inset-x-0 top-[42.5dvh] -translate-y-1/2 sm:inset-0 sm:top-0 sm:translate-y-0 z-20 flex items-center justify-center pointer-events-none select-none">
+      <div className="relative w-[min(52vw,25dvh)] h-[min(52vw,25dvh)] sm:w-[290px] sm:h-[290px] md:w-[330px] md:h-[330px] flex items-center justify-center">
         {/* Authentic Liquid Glass Circular Sphere via @ybouane/liquidglass (matching 2026 Dock) */}
         <div
           ref={orbRootRef}
@@ -1860,6 +1860,26 @@ const LiquidOrb = () => {
           className="absolute w-[138.89%] h-[138.89%] block pointer-events-none z-10"
         />
 
+        {/* Fallback hologram wave if WebGPU is unavailable on device */}
+        {errorMsg && (
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 z-10 rounded-full overflow-hidden pointer-events-none flex items-center justify-center"
+            style={{
+              boxShadow:
+                "inset 0 0 22px rgba(255,255,255,0.85), inset 4px -4px 16px rgba(120,210,255,0.45), inset -4px 4px 16px rgba(255,140,220,0.45), 0 12px 28px rgba(0,0,0,0.12)",
+            }}
+          >
+            <div
+              className="w-[82%] h-[42%] rounded-full blur-[10px] opacity-90 animate-pulse"
+              style={{
+                background:
+                  "radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.95) 0%, rgba(255,105,195,0.85) 35%, rgba(130,115,255,0.8) 65%, rgba(80,220,255,0.65) 100%)",
+              }}
+            />
+          </div>
+        )}
+
         {/* Interactive circular hit area */}
         <button
           type="button"
@@ -1868,15 +1888,6 @@ const LiquidOrb = () => {
           title="Click to toggle Thinking / Idle state"
           className="absolute inset-0 z-20 rounded-full pointer-events-auto cursor-pointer bg-transparent border-none focus:outline-none"
         />
-
-        {errorMsg && (
-          <div
-            id="status"
-            className="absolute inset-0 z-30 grid place-items-center text-white text-sm font-sans bg-black/70 rounded-full px-6 text-center"
-          >
-            {errorMsg}
-          </div>
-        )}
       </div>
     </div>
   );

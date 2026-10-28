@@ -130,9 +130,9 @@ const CyberBackground = () => {
           bgColor = vec3(0.0, 0.0, 0.0);         // #000000 Nền đen
           textColor = vec3(0.60, 0.62, 0.66);    // #999ea8 Chữ xám
         } else {
-          // Light Mode: Nền trắng tinh khiết, chữ màu xanh ngọc pastel (#c8d4e4) chuẩn theo ảnh mẫu
+          // Light Mode: Nền trắng tinh khiết, chữ màu xanh xám pastel (#b7c4d5) chuẩn theo ảnh mẫu
           bgColor = vec3(1.0, 1.0, 1.0);         // #ffffff Nền trắng
-          textColor = vec3(0.784, 0.831, 0.894); // #c8d4e4 (R=200, G=212, B=228) Chữ xanh ngọc pastel
+          textColor = vec3(0.718, 0.769, 0.835); // #b7c4d5 Chữ xanh xám pastel
         }
 
         // Dynamic continuous color spectrum cycling over time
@@ -236,23 +236,22 @@ const CyberBackground = () => {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
-    const linesData2026 = [
+    const DESKTOP_LINES_2026 = [
       { text: "HUYNHKIMCUONG" },
       { text: "WEB&MOBILE" },
       { text: "DEVELOPER" },
     ];
 
-    const expansionState = [
-      new Float32Array(linesData2026[0].text.length),
-      new Float32Array(linesData2026[1].text.length),
-      new Float32Array(linesData2026[2].text.length),
+    const MOBILE_LINES_2026 = [
+      { text: "HUYNH KIM" },
+      { text: "KIM CUONG" },
+      { text: "WEB&MOBILE" },
+      { text: "DEVELOPER" },
     ];
 
-    const holdTimers = [
-      new Float32Array(linesData2026[0].text.length),
-      new Float32Array(linesData2026[1].text.length),
-      new Float32Array(linesData2026[2].text.length),
-    ];
+    let activeLines = DESKTOP_LINES_2026;
+    let expansionState = activeLines.map((l) => new Float32Array(l.text.length));
+    let holdTimers = activeLines.map((l) => new Float32Array(l.text.length));
 
     const mousePixel = {
       x: -9999,
@@ -274,21 +273,27 @@ const CyberBackground = () => {
     let cachedHeight = 0;
     let cachedDpr = 1;
     let cachedTargetFontSize = 0;
+    let cachedHorizontalPad = 2;
+    let cachedCharGap = 1;
     let needsTextureRedraw = true;
 
     const textCtx = textCanvas.getContext("2d");
 
-    const computeMetrics = (targetFontSize) => {
+    const computeMetrics = (targetFontSize, linesList = activeLines) => {
       if (!textCtx) return [];
       textCtx.font = `900 ${targetFontSize}px 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif`;
-      return linesData2026.map((lineItem) => {
+      return linesList.map((lineItem) => {
         const chars = lineItem.text.split("");
         const metrics = chars.map((char) => {
+          if (char === " ") {
+            const spaceW = Math.max(targetFontSize * 0.2, 4);
+            return { left: 0, right: spaceW, inkW: spaceW, isSpace: true };
+          }
           const m = textCtx.measureText(char);
           const left = m.actualBoundingBoxLeft || 0;
           const right = m.actualBoundingBoxRight || m.width;
           const inkW = Math.max(left + right, 1);
-          return { left, right, inkW };
+          return { left, right, inkW, isSpace: false };
         });
         const totalBaseInkW = metrics.reduce((sum, m) => sum + m.inkW, 0);
         return { chars, metrics, totalBaseInkW };
@@ -296,7 +301,7 @@ const CyberBackground = () => {
     };
 
     const hasExpandingChars = () => {
-      for (let l = 0; l < 3; l++) {
+      for (let l = 0; l < expansionState.length; l++) {
         const row = expansionState[l];
         const timers = holdTimers[l];
         for (let c = 0; c < row.length; c++) {
@@ -323,9 +328,9 @@ const CyberBackground = () => {
       const rowHeight = cachedRowHeight;
       const offsetY = cachedOffsetY;
       const isMouseActive = mousePixel.targetX >= 0 && mousePixel.targetY >= 0;
-      const availableWidth = width - 4;
-      const startX = 2;
-      const charGap = 1;
+      const startX = cachedHorizontalPad;
+      const availableWidth = width - cachedHorizontalPad * 2;
+      const charGap = cachedCharGap;
 
       textCtx.textBaseline = "middle";
       textCtx.textAlign = "left";
@@ -366,7 +371,7 @@ const CyberBackground = () => {
 
         for (let cIdx = 0; cIdx < numChars; cIdx++) {
           let target = 0.0;
-          if (vertFactor > 0.001) {
+          if (vertFactor > 0.001 && !metrics[cIdx].isSpace) {
             const center = baseCenters[cIdx];
             const dist = Math.abs(mousePixel.x - center);
             const distLeft = cIdx > 0 ? center - baseCenters[cIdx - 1] : baseWidths[cIdx];
@@ -418,13 +423,15 @@ const CyberBackground = () => {
           const char = chars[cIdx];
           const slotW = finalWidths[cIdx];
           const m = metrics[cIdx];
-          const scaleX = slotW / m.inkW;
 
-          textCtx.save();
-          textCtx.translate(currX, rowCenterY);
-          textCtx.scale(scaleX, 1);
-          textCtx.fillText(char, m.left, 0);
-          textCtx.restore();
+          if (!m.isSpace) {
+            const scaleX = slotW / m.inkW;
+            textCtx.save();
+            textCtx.translate(currX, rowCenterY);
+            textCtx.scale(scaleX, 1);
+            textCtx.fillText(char, m.left, 0);
+            textCtx.restore();
+          }
 
           currX += slotW + charGap;
         }
@@ -474,22 +481,38 @@ const CyberBackground = () => {
       textCanvas.width = canvas.width;
       textCanvas.height = canvas.height;
 
-      const isPortrait = height > width * 0.95;
+      const isPortrait = width < 640 || height > width * 0.95;
+      const nextLines = isPortrait ? MOBILE_LINES_2026 : DESKTOP_LINES_2026;
+      if (activeLines !== nextLines) {
+        activeLines = nextLines;
+        expansionState = activeLines.map((l) => new Float32Array(l.text.length));
+        holdTimers = activeLines.map((l) => new Float32Array(l.text.length));
+      }
+
       let rowHeight = height / 3;
       let targetFontSize = (rowHeight / 0.7) * 0.95;
       let offsetY = 0;
+      let horizontalPad = 2;
+      let charGap = 1;
 
       if (isPortrait) {
-        const maxFontSizeByWidth = (width / 14) * 2.2;
-        targetFontSize = Math.min(targetFontSize, maxFontSizeByWidth);
-        rowHeight = targetFontSize * 1.18;
-        offsetY = (height - rowHeight * 3) / 2;
+        // Mobile vertical layout: 4 stacked rows positioned neatly between Timeline and 2x2 Folders
+        const topBound = Math.max(96, height * 0.138);
+        const bottomBound = Math.max(topBound + 200, height * 0.575);
+        const blockHeight = bottomBound - topBound;
+        rowHeight = blockHeight / activeLines.length;
+        targetFontSize = rowHeight * 1.12;
+        offsetY = topBound;
+        horizontalPad = Math.max(12, Math.round(width * 0.036));
+        charGap = 2;
       }
 
       cachedRowHeight = rowHeight;
       cachedOffsetY = offsetY;
       cachedTargetFontSize = targetFontSize;
-      cachedMetrics = computeMetrics(targetFontSize);
+      cachedHorizontalPad = horizontalPad;
+      cachedCharGap = charGap;
+      cachedMetrics = computeMetrics(targetFontSize, activeLines);
 
       renderTextTexture(true);
     };

@@ -204,29 +204,32 @@ const CyberDockWidgetBar = () => {
   };
 
   return (
-    <div className="flex items-center gap-1.5 sm:gap-2 px-1 py-0.5 text-white overflow-x-auto no-scrollbar max-w-full select-none">
+    <div className="grid grid-cols-2 gap-2 w-full md:w-auto md:flex md:items-center md:gap-1.5 lg:gap-2 xl:gap-2.5 px-1 py-1 md:py-0.5 text-white max-w-full select-none">
       {/* ─────────────────────────────────────────────────────────────
           1. FINDER (Projects & Storage: SSD 142/256 GB · RAM 12/16 GB)
           ───────────────────────────────────────────────────────────── */}
       <div
         onClick={() => handleAppClick("finder")}
-        className="group relative flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] active:scale-[0.98] border border-white/[0.06] hover:border-[#00f0ff]/40 transition-all duration-200 cursor-pointer flex-shrink-0"
+        className="cyber-app-glass-card md:order-1 group flex items-center gap-2 md:gap-2 xl:gap-2.5 px-2 md:px-2.5 xl:px-3 py-2 md:py-1.5 active:scale-[0.98] cursor-pointer min-w-0 md:flex-shrink-0"
         title="Finder / Projects Vault"
       >
         <img
           src="/images/finder.png"
           alt="Finder"
-          className="w-11 h-11 object-contain filter brightness-110 drop-shadow-[0_0_8px_rgba(0,240,255,0.4)] transition-transform group-hover:scale-105 flex-shrink-0"
+          className="w-9 h-9 md:w-9 md:h-9 lg:w-10 lg:h-10 xl:w-11 xl:h-11 object-contain filter brightness-110 drop-shadow-[0_0_8px_rgba(0,240,255,0.4)] transition-transform group-hover:scale-105 flex-shrink-0"
         />
 
-        <div className="flex flex-col justify-center min-w-[136px]">
-          <div className="flex items-center justify-between gap-1.5">
-            <span className="text-[13px] font-semibold text-white tracking-tight group-hover:text-[#00f0ff] transition-colors leading-snug">
+        <div className="flex flex-col justify-center min-w-0 flex-1 md:min-w-[95px] lg:min-w-[115px] xl:min-w-[136px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs xl:text-[13px] font-semibold text-white tracking-tight group-hover:text-[#00f0ff] transition-colors leading-snug truncate">
               Finder
             </span>
-            <div className="flex items-center gap-1 text-[9.5px] font-mono text-cyan-300">
+            <span className="text-[9px] md:hidden font-mono text-cyan-300/90 flex-shrink-0">
+              4 Proj
+            </span>
+            <div className="hidden md:flex items-center gap-1 text-[9px] xl:text-[9.5px] font-mono text-cyan-300">
               <span>142/256 GB</span>
-              <div className="w-9 h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="hidden lg:block w-7 xl:w-9 h-1.5 bg-white/10 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full"
                   style={{ width: "55%" }}
@@ -235,9 +238,22 @@ const CyberDockWidgetBar = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-[10px] text-white/50 font-mono pt-0.5 leading-snug">
+          {/* Mobile compact storage bar */}
+          <div className="flex md:hidden items-center justify-between gap-1.5 pt-0.5">
+            <span className="text-[9px] text-white/70 font-mono truncate">
+              142/256GB
+            </span>
+            <div className="w-8 h-1 bg-white/15 rounded-full overflow-hidden flex-shrink-0">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full"
+                style={{ width: "55%" }}
+              />
+            </div>
+          </div>
+
+          <div className="hidden md:flex items-center justify-between text-[9.5px] xl:text-[10px] text-white/65 font-mono pt-0.5 leading-snug">
             <span>RAM 12/16 GB</span>
-            <span className="text-white/40">· 4 Projects</span>
+            <span className="hidden lg:inline text-white/55">· 4 Projects</span>
           </div>
         </div>
 
@@ -248,35 +264,39 @@ const CyberDockWidgetBar = () => {
       </div>
 
       {/* Glass Divider */}
-      <div className="w-[1px] h-8 bg-white/10 flex-shrink-0" />
+      <div className="hidden md:block md:order-2 w-[1px] h-7 xl:h-8 bg-white/10 flex-shrink-0" />
 
       {/* ─────────────────────────────────────────────────────────────
           2. TERMINAL (Skills & Stacks: zsh · 6/6 Stacks 100%)
           ───────────────────────────────────────────────────────────── */}
       <div
         onClick={() => handleAppClick("terminal")}
-        className="group relative flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] active:scale-[0.98] border border-white/[0.06] hover:border-emerald-400/40 transition-all duration-200 cursor-pointer flex-shrink-0"
+        className="cyber-app-glass-card md:order-3 group flex items-center gap-2 md:gap-2 xl:gap-2.5 px-2 md:px-2.5 xl:px-3 py-2 md:py-1.5 active:scale-[0.98] cursor-pointer min-w-0 md:flex-shrink-0"
         title="Terminal / Tech Stack Engine"
       >
         <img
           src="/images/terminal.png"
           alt="Terminal"
-          className="w-11 h-11 object-contain filter brightness-110 drop-shadow-[0_0_8px_rgba(0,255,160,0.4)] transition-transform group-hover:scale-105 flex-shrink-0"
+          className="w-9 h-9 md:w-9 md:h-9 lg:w-10 lg:h-10 xl:w-11 xl:h-11 object-contain filter brightness-110 drop-shadow-[0_0_8px_rgba(0,255,160,0.4)] transition-transform group-hover:scale-105 flex-shrink-0"
         />
 
-        <div className="flex flex-col justify-center min-w-[136px]">
-          <div className="flex items-center justify-between gap-1.5">
-            <span className="text-[13px] font-semibold text-white tracking-tight group-hover:text-emerald-400 transition-colors leading-snug">
+        <div className="flex flex-col justify-center min-w-0 flex-1 md:min-w-[90px] lg:min-w-[110px] xl:min-w-[136px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs xl:text-[13px] font-semibold text-white tracking-tight group-hover:text-cyan-200 transition-colors leading-snug truncate">
               Terminal
             </span>
-            <span className="text-[9.5px] text-white/50 font-mono">zsh · Node</span>
+            <span className="text-[9px] xl:text-[9.5px] text-white/65 font-mono flex-shrink-0">
+              zsh
+            </span>
           </div>
 
-          <div className="flex items-center justify-between text-[10px] pt-0.5 leading-snug">
-            <span className="text-emerald-400 font-mono font-medium">6/6 Stacks</span>
-            <div className="flex items-center gap-1 font-mono text-[9.5px] text-white/60">
-              <span>100%</span>
-              <div className="w-8 h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div className="flex items-center justify-between gap-1 text-[9px] xl:text-[10px] pt-0.5 leading-snug">
+            <span className="text-emerald-300 font-mono font-medium truncate">
+              6/6 Stacks
+            </span>
+            <div className="flex items-center gap-1 font-mono text-[9px] xl:text-[9.5px] text-white/75 flex-shrink-0">
+              <span className="hidden xl:inline">100%</span>
+              <div className="w-5 lg:w-7 xl:w-8 h-1 xl:h-1.5 bg-white/15 rounded-full overflow-hidden">
                 <div className="h-full bg-emerald-400 rounded-full w-full" />
               </div>
             </div>
@@ -290,34 +310,34 @@ const CyberDockWidgetBar = () => {
       </div>
 
       {/* Glass Divider */}
-      <div className="w-[1px] h-8 bg-white/10 flex-shrink-0" />
+      <div className="hidden md:block md:order-4 w-[1px] h-7 xl:h-8 bg-white/10 flex-shrink-0" />
 
       {/* ─────────────────────────────────────────────────────────────
           3. CONTACT (Uplink / Status: Online · Available for Hire)
           ───────────────────────────────────────────────────────────── */}
       <div
         onClick={() => handleAppClick("contact")}
-        className="group relative flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] active:scale-[0.98] border border-white/[0.06] hover:border-blue-400/40 transition-all duration-200 cursor-pointer flex-shrink-0"
+        className="cyber-app-glass-card md:order-5 group flex items-center gap-2 md:gap-2 xl:gap-2.5 px-2 md:px-2.5 xl:px-3 py-2 md:py-1.5 active:scale-[0.98] cursor-pointer min-w-0 md:flex-shrink-0"
         title="Contact / Messages"
       >
         <img
           src="/images/contact.png"
           alt="Contact"
-          className="w-11 h-11 object-contain filter brightness-110 drop-shadow-[0_0_8px_rgba(0,180,255,0.4)] transition-transform group-hover:scale-105 flex-shrink-0"
+          className="w-9 h-9 md:w-9 md:h-9 lg:w-10 lg:h-10 xl:w-11 xl:h-11 object-contain filter brightness-110 drop-shadow-[0_0_8px_rgba(0,180,255,0.4)] transition-transform group-hover:scale-105 flex-shrink-0"
         />
 
-        <div className="flex flex-col justify-center min-w-[120px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] font-semibold text-white tracking-tight group-hover:text-blue-300 transition-colors leading-snug">
+        <div className="flex flex-col justify-center min-w-0 flex-1 md:min-w-[85px] lg:min-w-[105px] xl:min-w-[120px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs xl:text-[13px] font-semibold text-white tracking-tight group-hover:text-cyan-200 transition-colors leading-snug truncate">
               Contact
             </span>
-            <span className="flex items-center gap-1 text-[9px] text-emerald-400 font-mono">
+            <span className="flex items-center gap-1 text-[9px] text-emerald-300 font-mono flex-shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Online
+              <span className="hidden lg:inline">Online</span>
             </span>
           </div>
 
-          <span className="text-[10px] text-white/50 tracking-tight pt-0.5 leading-snug">
+          <span className="text-[9px] xl:text-[10px] text-white/70 tracking-tight pt-0.5 leading-snug truncate">
             Available for Hire
           </span>
         </div>
@@ -328,118 +348,19 @@ const CyberDockWidgetBar = () => {
         )}
       </div>
 
-      {/* Glass Divider */}
-      <div className="w-[1px] h-8 bg-white/10 flex-shrink-0" />
-
       {/* ─────────────────────────────────────────────────────────────
-          4. PHOTOS & MUSIC PLAYER (Golden Hour Drive · Synth OST)
+          4. QUEST / TASK CHECKLIST (Cell 4 on mobile, hidden on tablet/iPad md-lg, visible on xl)
           ───────────────────────────────────────────────────────────── */}
-      <div
-        className={clsx(
-          "group relative flex items-center gap-2.5 px-3 py-1.5 rounded-xl border transition-all duration-200 flex-shrink-0",
-          isPlaying
-            ? "bg-white/[0.08] border-[#00f0ff]/50 shadow-[0_0_15px_rgba(0,240,255,0.15)]"
-            : "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.06] hover:border-white/20"
-        )}
-      >
-        {/* Photos 2026 Icon */}
-        <div
-          onClick={() => handleAppClick("photos")}
-          className="cursor-pointer transition-transform group-hover:scale-105 flex-shrink-0"
-          title="Open Gallery (Photos)"
-        >
-          <img
-            src="/images/photos.png"
-            alt="Photos"
-            className="w-11 h-11 object-contain filter brightness-110 drop-shadow-[0_0_8px_rgba(255,160,0,0.4)]"
-          />
-        </div>
-
-        {/* Track Info & Progress */}
-        <div className="flex flex-col justify-center min-w-[110px] max-w-[135px]">
-          <span className="text-[12.5px] font-semibold text-white truncate leading-snug">
-            Golden Hour Drive
-          </span>
-          <span className="text-[10px] text-white/50 truncate leading-snug">
-            Neva Lane · OST
-          </span>
-          {/* Mini progress bar along bottom */}
-          <div className="w-full h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden">
-            <div
-              className="h-full bg-white/70 rounded-full transition-[width] duration-300 ease-linear"
-              style={{ width: `${trackProgress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Media Controls */}
-        <div className="flex items-center gap-1.5 pl-0.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setTrackProgress(0);
-            }}
-            className="p-1 text-white/50 hover:text-white transition active:scale-90"
-            title="Restart Track"
-          >
-            <SkipBack className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Circular Bright Blue Play/Pause Button */}
-          <button
-            type="button"
-            onClick={togglePlay}
-            className={clsx(
-              "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95 shadow-md",
-              isPlaying
-                ? "bg-[#00f0ff] text-black shadow-[0_0_12px_rgba(0,240,255,0.7)]"
-                : "bg-[#0070f3] hover:bg-[#0060df] text-white shadow-[0_0_10px_rgba(0,112,243,0.5)]"
-            )}
-            title={isPlaying ? "Pause Ambient Music" : "Play Ambient Synthwave"}
-          >
-            {isPlaying ? (
-              <Pause className="w-4 h-4 fill-current" />
-            ) : (
-              <Play className="w-4 h-4 fill-current translate-x-0.5" />
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setTrackProgress((p) => (p + 25) % 100);
-            }}
-            className="p-1 text-white/50 hover:text-white transition active:scale-90"
-            title="Next Track"
-          >
-            <SkipForward className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Window open indicator */}
-        {windows.photos?.isOpen && (
-          <span className="size-1.5 rounded-full bg-purple-400 shadow-[0_0_6px_#c084fc] absolute -bottom-0.5 left-1/2 -translate-x-1/2 pointer-events-none" />
-        )}
-      </div>
-
-      {/* Glass Divider */}
-      <div className="w-[1px] h-8 bg-white/10 flex-shrink-0" />
-
-      {/* ─────────────────────────────────────────────────────────────
-          5. QUEST / TASK CHECKLIST
-          ───────────────────────────────────────────────────────────── */}
-      <div className="group relative flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-cyan-400/30 transition-all duration-200 flex-shrink-0">
+      <div className="cyber-app-glass-card cyber-checklist-card flex md:hidden xl:flex md:order-9 group items-center gap-2 md:gap-2.5 px-2.5 md:px-3 py-2 md:py-1.5 min-w-0 md:flex-shrink-0">
         {/* Circular Progress Ring with remaining task count */}
-        <div className="relative w-8 h-8 flex items-center justify-center flex-shrink-0">
+        <div className="relative w-7 h-7 md:w-8 md:h-8 flex items-center justify-center flex-shrink-0">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 24 24">
             <circle
               cx="12"
               cy="12"
               r="9"
               fill="none"
-              stroke="rgba(255,255,255,0.15)"
+              stroke="rgba(255,255,255,0.2)"
               strokeWidth="2.2"
             />
             <circle
@@ -456,31 +377,31 @@ const CyberDockWidgetBar = () => {
               style={{ transition: "stroke-dashoffset 0.4s ease" }}
             />
           </svg>
-          <span className="absolute text-[11px] font-bold text-white">
+          <span className="absolute text-[10px] md:text-[11px] font-bold text-white">
             {activeTaskCount}
           </span>
         </div>
 
-        {/* Task Items (Click opens relevant window) */}
-        <div className="flex flex-col gap-1 min-w-[130px]">
+        {/* Task Items */}
+        <div className="flex flex-col gap-1 min-w-0 flex-1 md:min-w-[130px]">
           {tasks.map((task) => (
             <div
               key={task.id}
               onClick={(e) => toggleTask(task.id, e)}
-              className="flex items-center gap-1.5 cursor-pointer group/task"
+              className="flex items-center gap-1.5 cursor-pointer group/task min-w-0"
               title={`Click to mark ${task.done ? "undone" : "done"}`}
             >
               {task.done ? (
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#00f0ff] flex-shrink-0" />
               ) : (
-                <Circle className="w-3.5 h-3.5 text-white/40 group-hover/task:text-[#00f0ff] transition-colors flex-shrink-0" />
+                <Circle className="w-3.5 h-3.5 text-white/55 group-hover/task:text-[#00f0ff] transition-colors flex-shrink-0" />
               )}
               <span
                 className={clsx(
-                  "text-[11px] tracking-tight transition-all whitespace-nowrap",
+                  "text-[10px] md:text-[11px] tracking-tight transition-all truncate",
                   task.done
-                    ? "line-through text-white/40"
-                    : "text-white/85 group-hover/task:text-white"
+                    ? "line-through text-white/45"
+                    : "text-white/90 group-hover/task:text-white"
                 )}
               >
                 {task.text}
@@ -489,6 +410,100 @@ const CyberDockWidgetBar = () => {
           ))}
         </div>
       </div>
+
+      {/* Glass Divider (only on md between Contact and Photos) */}
+      <div className="hidden md:block md:order-6 w-[1px] h-7 xl:h-8 bg-white/10 flex-shrink-0" />
+
+      {/* ─────────────────────────────────────────────────────────────
+          5. PHOTOS & MUSIC PLAYER (Full-width bottom row on mobile, inline on desktop)
+          ───────────────────────────────────────────────────────────── */}
+      <div className="cyber-app-glass-card col-span-2 md:order-7 group flex items-center justify-between md:justify-start gap-2 md:gap-2 xl:gap-2.5 px-2.5 md:px-2.5 xl:px-3 py-2 md:py-1.5 min-w-0 md:flex-shrink-0">
+        <div className="flex items-center gap-2 md:gap-2 xl:gap-2.5 min-w-0 flex-1">
+          {/* Photos 2026 Icon */}
+          <div
+            onClick={() => handleAppClick("photos")}
+            className="cursor-pointer transition-transform group-hover:scale-105 flex-shrink-0"
+            title="Open Gallery (Photos)"
+          >
+            <img
+              src="/images/photos.png"
+              alt="Photos"
+              className="w-9 h-9 md:w-9 md:h-9 lg:w-10 lg:h-10 xl:w-11 xl:h-11 object-contain filter brightness-110 drop-shadow-[0_0_8px_rgba(255,160,0,0.4)]"
+            />
+          </div>
+
+          {/* Track Info & Progress */}
+          <div className="flex flex-col justify-center min-w-0 flex-1 md:min-w-[80px] md:max-w-[100px] lg:min-w-[105px] lg:max-w-[125px] xl:min-w-[115px] xl:max-w-[135px]">
+            <span className="text-xs xl:text-[12.5px] font-semibold text-white truncate leading-snug">
+              Golden Hour Drive
+            </span>
+            <span className="text-[9px] xl:text-[10px] text-white/50 truncate leading-snug">
+              Neva Lane · OST
+            </span>
+            {/* Mini progress bar along bottom */}
+            <div className="w-full h-1 xl:h-1.5 bg-white/10 rounded-full mt-0.5 xl:mt-1 overflow-hidden">
+              <div
+                className="h-full bg-white/70 rounded-full transition-[width] duration-300 ease-linear"
+                style={{ width: `${trackProgress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Media Controls */}
+        <div className="flex items-center gap-1 xl:gap-1.5 pl-0.5 xl:pl-1 flex-shrink-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setTrackProgress(0);
+            }}
+            className="p-0.5 xl:p-1 text-white/50 hover:text-white transition active:scale-90 cursor-pointer"
+            title="Restart Track"
+          >
+            <SkipBack className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Circular Bright Blue Play/Pause Button */}
+          <button
+            type="button"
+            onClick={togglePlay}
+            className={clsx(
+              "w-7 h-7 xl:w-8 xl:h-8 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95 shadow-md cursor-pointer",
+              isPlaying
+                ? "bg-[#00f0ff] text-black shadow-[0_0_12px_rgba(0,240,255,0.7)]"
+                : "bg-[#0070f3] hover:bg-[#0060df] text-white shadow-[0_0_10px_rgba(0,112,243,0.5)]"
+            )}
+            title={isPlaying ? "Pause Ambient Music" : "Play Ambient Synthwave"}
+          >
+            {isPlaying ? (
+              <Pause className="w-3.5 h-3.5 xl:w-4 xl:h-4 fill-current" />
+            ) : (
+              <Play className="w-3.5 h-3.5 xl:w-4 xl:h-4 fill-current translate-x-0.5" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setTrackProgress((p) => (p + 25) % 100);
+            }}
+            className="p-0.5 xl:p-1 text-white/50 hover:text-white transition active:scale-90 cursor-pointer"
+            title="Next Track"
+          >
+            <SkipForward className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Window open indicator */}
+        {windows.photos?.isOpen && (
+          <span className="size-1.5 rounded-full bg-purple-400 shadow-[0_0_6px_#c084fc] absolute -bottom-0.5 left-1/2 -translate-x-1/2 pointer-events-none" />
+        )}
+      </div>
+
+      {/* Glass Divider (only on xl before Checklist) */}
+      <div className="cyber-checklist-card hidden xl:block md:order-8 w-[1px] h-7 xl:h-8 bg-white/10 flex-shrink-0" />
     </div>
   );
 };

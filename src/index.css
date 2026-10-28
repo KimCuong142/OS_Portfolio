@@ -103,22 +103,6 @@ body.theme-2004 {
   nav {
     @apply flex justify-between items-center bg-white/50 backdrop-blur-3xl p-2 px-5 select-none;
 
-    div {
-      @apply flex items-center max-sm:w-full max-sm:justify-center gap-5;
-
-      &:last-child {
-        @apply max-sm:hidden;
-      }
-    }
-
-    ul {
-      @apply flex items-center gap-5 max-sm:hidden;
-
-      p {
-        @apply text-sm cursor-pointer hover:underline transition-all;
-      }
-    }
-
     time {
       @apply text-sm font-medium text-black;
     }
@@ -131,14 +115,14 @@ body.theme-2004 {
   }
 
   #welcome {
-    @apply text-gray-200 flex flex-col justify-center items-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none w-full max-w-full px-4;
+    @apply text-gray-200 flex flex-col justify-center items-center absolute top-[33dvh] md:top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none w-full max-w-full px-4;
   }
 
   #dock {
-    @apply absolute bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-50 select-none max-w-[calc(100vw-12px)] overflow-visible;
+    @apply absolute bottom-3.5 sm:bottom-5 left-1/2 -translate-x-1/2 z-50 select-none w-[calc(100vw-32px)] max-w-[356px] sm:w-auto sm:max-w-[calc(100vw-12px)] overflow-visible;
 
     .dock-container {
-      @apply justify-between rounded-2xl p-1 sm:p-1.5 flex items-end gap-1 sm:gap-1.5 max-w-full overflow-visible;
+      @apply justify-between rounded-[26px] sm:rounded-2xl px-3.5 py-2 sm:p-1.5 flex items-center sm:items-end gap-1.5 sm:gap-1.5 w-full sm:w-auto max-w-full overflow-visible;
       scrollbar-width: none;
       &::-webkit-scrollbar {
         display: none;
@@ -146,14 +130,14 @@ body.theme-2004 {
     }
 
     .tooltip {
-      @apply !py-1 !px-3 !w-fit !text-center !text-xs !rounded-md !bg-blue-200 !text-blue-900 !shadow-2xl;
+      @apply !py-1 !px-3 !w-fit !text-center !text-xs !rounded-md !bg-blue-200 !text-blue-900 !shadow-2xl max-sm:!hidden;
     }
 
     .dock-icon {
-      @apply size-10 sm:size-14 3xl:size-20 cursor-pointer flex-shrink-0;
+      @apply size-11 sm:size-14 3xl:size-20 cursor-pointer flex-shrink-0 active:scale-90 sm:active:scale-100 transition-transform;
 
       img {
-        @apply object-cover object-center;
+        @apply object-cover object-center size-full;
       }
     }
   }
@@ -402,11 +386,16 @@ body.theme-2004 {
     border: 1px solid #002275 !important;
     box-shadow: 2px 4px 22px rgba(0, 0, 0, 0.45) !important;
     background: #ece9d8 !important;
-    max-height: 85vh !important;
-    height: min(520px, calc(100vh - 50px)) !important;
+    max-height: calc(100dvh - 88px) !important;
+    height: min(520px, calc(100dvh - 88px)) !important;
     width: min(760px, calc(100vw - 12px)) !important;
     max-width: calc(100vw - 12px) !important;
-    left: 6px !important;
+  }
+
+  @media (max-width: 639px) {
+    .theme-2004 #finder {
+      left: 6px !important;
+    }
   }
 
   .theme-2004 #finder.window-maximized {
@@ -451,7 +440,7 @@ body.theme-2004 {
 
     ul {
       li {
-        @apply absolute select-none flex items-center flex-col;
+        @apply sm:absolute select-none flex items-center flex-col;
       }
     }
   }
@@ -540,26 +529,96 @@ body.theme-2004 {
   .cyber-liquid-dock {
     display: flex;
     align-items: center;
-    width: max-content;
+    width: 100%;
     background: transparent;
     border: none;
     box-shadow: none;
     border-radius: 0px;
-    padding: 4px 8px;
+    padding: 6px;
     max-width: calc(100vw - 16px);
+  }
+
+  @media (min-width: 768px) {
+    .cyber-liquid-dock {
+      width: max-content;
+      padding: 4px 8px;
+    }
+  }
+
+  /* On tablet / iPad or square-ish screens, hide checklist to keep dock fully visible */
+  @media (max-aspect-ratio: 1.45) and (min-width: 768px) {
+    .cyber-checklist-card {
+      display: none !important;
+    }
+  }
+
+  /* 2077 Inner App Card — Crystal-Clear Transparent Glass + Specular Rim + Aqua Hover */
+  .cyber-app-glass-card {
+    position: relative;
+    border-radius: 16px;
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.01) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    box-shadow:
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.55),
+      inset 1px 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 1.5px 0 rgba(255, 255, 255, 0.18),
+      0 4px 12px -4px rgba(0, 8, 20, 0.25);
+    text-shadow: 0 1px 3px rgba(0, 8, 20, 0.75);
+    transition:
+      background 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+      backdrop-filter 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+      -webkit-backdrop-filter 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .cyber-app-glass-card:hover,
+  .cyber-app-glass-card:active {
+    background:
+      radial-gradient(
+        115% 130% at 24% 28%,
+        rgba(64, 234, 255, 0.28) 0%,
+        rgba(0, 210, 245, 0.12) 55%,
+        rgba(255, 255, 255, 0.02) 100%
+      );
+    backdrop-filter: blur(3px) saturate(135%);
+    -webkit-backdrop-filter: blur(3px) saturate(135%);
+    border-color: rgba(150, 246, 255, 0.58);
+    box-shadow:
+      inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.82),
+      inset 1px 0 1.5px 0 rgba(190, 250, 255, 0.42),
+      inset 0 -1px 2px 0 rgba(0, 230, 255, 0.45),
+      inset 0 0 12px 0 rgba(56, 232, 255, 0.16),
+      0 6px 18px -4px rgba(0, 210, 255, 0.22);
   }
 
   /* 2077 Target Cursor Reticle */
   .cyber-reticle {
+    display: none;
     position: fixed;
     pointer-events: none;
     z-index: 9999;
     will-change: transform;
   }
 
-  body.theme-2077.cyber-hide-cursor,
-  body.theme-2077.cyber-hide-cursor * {
-    cursor: none !important;
+  /* Only hide native cursor and show HUD reticle on devices with a mouse/pointer */
+  @media (hover: hover) and (pointer: fine) {
+    .cyber-reticle {
+      display: block;
+    }
+
+    body.theme-2077.cyber-hide-cursor,
+    body.theme-2077.cyber-hide-cursor * {
+      cursor: none !important;
+    }
   }
 
   /* ========================================= */

@@ -55,16 +55,16 @@ const Dock = () => {
             chromAberration: 0.3,
             edgeHighlight: is2077 ? 0.3 : 0,
             specular: is2077 ? 0.55 : 0,
-            fresnel: is2077 ? 0 : 1,
-            distortion: 0.15,
+            fresnel: 1,
+            distortion: is2077 ? 1 : 0.15,
             cornerRadius: is2077 ? 0 : 40,
             zRadius: is2077 ? 100 : 30,
             opacity: 1,
-            saturation: 0.08,
+            saturation: is2077 ? 0.05 : 0.08,
             brightness: is2077 ? 0.15 : 0,
             shadowOpacity: is2077 ? 0 : 0.35,
             shadowSpread: 12,
-            bevelMode: is2077 ? 1 : 0,
+            bevelMode: 0,
           },
         });
         if (isDestroyed && liquidInstance) {
@@ -181,73 +181,78 @@ const Dock = () => {
     };
   }, [is2026, is2077, mode2026]);
 
-  // GSAP Smooth Icon Magnification on Hover (Zero layout thrashing with cached rects)
+  // GSAP Smooth Icon Magnification on Hover (Desktop pointer devices only)
   useGSAP(
     () => {
       const dock = dockRef.current;
       if (!dock || is2077) return;
 
-      const icons = dock.querySelectorAll(".dock-icon");
-      let cachedDockLeft = 0;
-      let cachedIconCenters = [];
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 640px) and (hover: hover) and (pointer: fine)", () => {
+        const icons = dock.querySelectorAll(".dock-icon");
+        let cachedDockLeft = 0;
+        let cachedIconCenters = [];
 
-      const updateBounds = () => {
-        const dockRect = dock.getBoundingClientRect();
-        cachedDockLeft = dockRect.left;
-        cachedIconCenters = Array.from(icons).map((icon) => {
-          const r = icon.getBoundingClientRect();
-          return {
-            icon,
-            center: r.left - dockRect.left + r.width / 2,
-          };
-        });
-      };
-
-      const animateIcons = (mouseX) => {
-        if (!cachedIconCenters.length) updateBounds();
-
-        cachedIconCenters.forEach(({ icon, center }) => {
-          const distance = Math.abs(mouseX - center);
-          const intensity = Math.exp(-(distance ** 2.4) / 18000);
-
-          gsap.to(icon, {
-            scale: 1 + (is2077 ? 0.32 : 0.32) * intensity,
-            y: (is2077 ? -18 : -18) * intensity,
-            duration: 0.12,
-            ease: "back.out(1.5)",
-            overwrite: "auto",
+        const updateBounds = () => {
+          const dockRect = dock.getBoundingClientRect();
+          cachedDockLeft = dockRect.left;
+          cachedIconCenters = Array.from(icons).map((icon) => {
+            const r = icon.getBoundingClientRect();
+            return {
+              icon,
+              center: r.left - dockRect.left + r.width / 2,
+            };
           });
-        });
-      };
+        };
 
-      const handleMouseMove = (e) => {
-        if (!cachedDockLeft) updateBounds();
-        animateIcons(e.clientX - cachedDockLeft);
-      };
+        const animateIcons = (mouseX) => {
+          if (!cachedIconCenters.length) updateBounds();
 
-      const resetIcons = () => {
-        cachedIconCenters = [];
-        cachedDockLeft = 0;
-        icons.forEach((icon) =>
-          gsap.to(icon, {
-            scale: 1,
-            y: 0,
-            duration: 0.15,
-            ease: "power2.out",
-            overwrite: "auto",
-          })
-        );
-      };
+          cachedIconCenters.forEach(({ icon, center }) => {
+            const distance = Math.abs(mouseX - center);
+            const intensity = Math.exp(-(distance ** 2.4) / 18000);
 
-      dock.addEventListener("mouseenter", updateBounds);
-      dock.addEventListener("mousemove", handleMouseMove);
-      dock.addEventListener("mouseleave", resetIcons);
+            gsap.to(icon, {
+              scale: 1 + 0.32 * intensity,
+              y: -18 * intensity,
+              duration: 0.12,
+              ease: "back.out(1.5)",
+              overwrite: "auto",
+            });
+          });
+        };
 
-      return () => {
-        dock.removeEventListener("mouseenter", updateBounds);
-        dock.removeEventListener("mousemove", handleMouseMove);
-        dock.removeEventListener("mouseleave", resetIcons);
-      };
+        const handleMouseMove = (e) => {
+          if (!cachedDockLeft) updateBounds();
+          animateIcons(e.clientX - cachedDockLeft);
+        };
+
+        const resetIcons = () => {
+          cachedIconCenters = [];
+          cachedDockLeft = 0;
+          icons.forEach((icon) =>
+            gsap.to(icon, {
+              scale: 1,
+              y: 0,
+              duration: 0.15,
+              ease: "power2.out",
+              overwrite: "auto",
+            })
+          );
+        };
+
+        dock.addEventListener("mouseenter", updateBounds);
+        dock.addEventListener("mousemove", handleMouseMove);
+        dock.addEventListener("mouseleave", resetIcons);
+
+        return () => {
+          dock.removeEventListener("mouseenter", updateBounds);
+          dock.removeEventListener("mousemove", handleMouseMove);
+          dock.removeEventListener("mouseleave", resetIcons);
+        };
+      });
+
+      return () => mm.revert();
     },
     { dependencies: [is2077], revertOnUpdate: true }
   );
@@ -275,10 +280,17 @@ const Dock = () => {
   if (currentYear === "2004") return null;
 
   return (
-    <section id="dock" className="select-none overflow-visible">
+    <section
+      id="dock"
+      className={clsx(
+        "select-none overflow-visible",
+        is2077 &&
+          "max-md:!bottom-auto max-md:!top-[56dvh] max-md:!-translate-y-1/2 max-md:!w-[calc(100vw-28px)] max-md:!max-w-[368px]"
+      )}
+    >
       <div
         ref={dockRootRef}
-        className="relative group overflow-visible"
+        className="relative group overflow-visible w-full"
       >
         {/* LiquidGlass Mirror Canvas for 2026 & 2077 (direct child before glass element) */}
         {(is2026 || is2077) && (
@@ -305,7 +317,7 @@ const Dock = () => {
               "dock-liquid-glass absolute inset-0 pointer-events-none",
               is2077
                 ? "rounded-none"
-                : "rounded-[24px] sm:rounded-[36px]"
+                : "rounded-[26px] sm:rounded-[36px]"
             )}
             style={{ overflow: "visible" }}
           />
@@ -325,7 +337,7 @@ const Dock = () => {
             className={clsx(
               "dock-container relative z-10 transition-all duration-300 overflow-visible",
               is2026
-                ? "!border-none !bg-transparent !shadow-none !rounded-[24px] sm:!rounded-[40px]"
+                ? "!border-none !bg-transparent !shadow-none !rounded-[26px] sm:!rounded-[40px]"
                 : "!bg-white/10 !backdrop-blur-sm !border !border-white/40 shadow-lg shadow-black/5"
             )}
           >
@@ -352,7 +364,7 @@ const Dock = () => {
                       loading="lazy"
                       className={clsx(
                         "transition-opacity duration-150",
-                        canOpen ? "" : "opacity-50"
+                        canOpen ? "" : "max-sm:opacity-95 sm:opacity-50"
                       )}
                     />
                   </button>

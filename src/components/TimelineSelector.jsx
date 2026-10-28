@@ -129,17 +129,15 @@ const TimelineSelector = () => {
   return (
     <div
       aria-label="Temporal Timeline Selector"
-      className="absolute top-10 sm:top-14 left-1/2 -translate-x-1/2 z-40 flex justify-center pointer-events-auto select-none transition-all duration-300"
+      className={clsx(
+        "absolute top-[48px] left-1/2 -translate-x-1/2 flex justify-center pointer-events-auto select-none",
+        is2077 ? "z-40" : "z-30"
+      )}
     >
       <div
         ref={timelineRootRef}
         className="relative flex items-center justify-center overflow-visible"
       >
-        {/* Cyber HUD Bracket in 2077 mode */}
-        {is2077 && (
-          <div className="cyber-bracket-top absolute -inset-y-2 sm:-inset-y-3 -inset-x-5 sm:-inset-x-10 bg-[#00f0ff]/15 border-t border-[#00f0ff]/30 border-b border-[#00f0ff]/40 -z-10 pointer-events-none transition-all duration-500" />
-        )}
-
         {/* 2026 LiquidGlass Mirror Canvas (direct child before glass element) */}
         {is2026 && (
           <canvas
@@ -168,17 +166,17 @@ const TimelineSelector = () => {
 
         <div
           className={clsx(
-            "relative z-10 flex items-center space-x-1.5 sm:space-x-4 px-2.5 sm:px-6 py-1 sm:py-2 rounded-full transition-all duration-300",
+            "relative z-10 flex items-center h-8 sm:h-9 px-4 sm:px-5 rounded-full border-0 box-border transition-colors duration-300",
             is2077
-              ? "border border-[#00f0ff]/30 bg-[#021020]/30 shadow-[0_0_20px_rgba(0,240,255,0.15)] font-mono"
+              ? "!bg-transparent !shadow-none font-mono"
               : is2004
-              ? "border-2 border-[#0055ea]/60 bg-gradient-to-b from-[#ffffff]/90 to-[#ece9d8]/90 shadow-md shadow-blue-900/20 font-sans"
+              ? "ring-2 ring-inset ring-[#0055ea]/60 bg-gradient-to-b from-[#ffffff]/90 to-[#ece9d8]/90 shadow-md shadow-blue-900/20 font-sans"
               : is2026
               ? clsx(
-                  "!border-none !bg-transparent !shadow-none font-sans transition-colors",
+                  "!bg-transparent !shadow-none font-sans",
                   isDark2026 ? "text-white" : "text-neutral-800"
                 )
-              : "border border-white/40 bg-white/15 shadow-md shadow-black/5 text-neutral-800 font-sans"
+              : "ring-1 ring-inset ring-white/40 bg-white/15 shadow-md shadow-black/5 text-neutral-800 font-sans"
           )}
         >
           {YEARS.map((year, idx) => {
@@ -188,41 +186,41 @@ const TimelineSelector = () => {
                 <button
                   type="button"
                   onClick={() => setYear(year)}
-                  className="group flex items-center space-x-1 sm:space-x-1.5 cursor-pointer focus:outline-none py-0.5"
+                  className="group w-[54px] sm:w-[64px] h-6 flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none flex-shrink-0"
                   title={`Switch to ${year} mode`}
                 >
                   <span
                     className={clsx(
-                      "inline-block transition-all",
+                      "inline-block flex-shrink-0 transition-all",
                       is2077
                         ? clsx(
-                            "w-2 sm:w-2.5 h-2 sm:h-2.5 rotate-45",
+                            "w-2.5 h-2.5 rotate-45",
                             isActive
                               ? "bg-[#00f0ff] diamond-glow"
                               : "border border-[#00f0ff]/60 group-hover:bg-[#00f0ff]"
                           )
                         : is2004
                         ? clsx(
-                            "w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full border transition-all",
+                            "w-2.5 h-2.5 rounded-full border transition-all",
                             isActive
                               ? "bg-[#28ad36] border-[#156e1f] shadow-sm shadow-green-700/50"
                               : "border-[#0055ea]/60 bg-white group-hover:bg-[#0055ea]/30"
                           )
                         : clsx(
-                            "w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full transition-all",
+                            "w-2.5 h-2.5 rounded-full transition-all",
                             isActive
                               ? isDark2026
                                 ? "bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)]"
                                 : "bg-neutral-950 shadow-xs"
                               : isDark2026
-                              ? "border-2 border-white/50 bg-transparent group-hover:border-white"
-                              : "border-2 border-neutral-500 bg-transparent group-hover:border-neutral-800"
+                              ? "border-[1.5px] border-white/50 bg-transparent group-hover:border-white"
+                              : "border-[1.5px] border-neutral-500 bg-transparent group-hover:border-neutral-800"
                           )
                     )}
                   />
                   <span
                     className={clsx(
-                      "text-[11px] sm:text-sm tracking-wider transition-colors",
+                      "text-xs sm:text-sm leading-none tracking-wider tabular-nums transition-colors",
                       is2077
                         ? isActive
                           ? "text-[#00f0ff] cyan-glow font-orbitron font-bold"
@@ -236,8 +234,8 @@ const TimelineSelector = () => {
                           ? "text-white font-bold font-sans drop-shadow-sm"
                           : "text-neutral-950 font-bold font-sans"
                         : isDark2026
-                        ? "text-white/70 group-hover:text-white font-semibold font-sans"
-                        : "text-neutral-600 group-hover:text-neutral-900 font-semibold font-sans"
+                        ? "text-white/70 group-hover:text-white font-medium sm:font-semibold font-sans"
+                        : "text-neutral-600 group-hover:text-neutral-900 font-medium sm:font-semibold font-sans"
                     )}
                   >
                     {year}
@@ -247,14 +245,14 @@ const TimelineSelector = () => {
                 {idx < YEARS.length - 1 && (
                   <span
                     className={clsx(
-                      "w-2 sm:w-6 h-[1px] ml-1.5 sm:ml-4 transition-colors",
+                      "w-3 sm:w-6 h-[1.5px] sm:h-[1px] mx-1.5 sm:mx-2.5 flex-shrink-0 transition-colors",
                       is2077
                         ? "bg-[#00f0ff]/30"
                         : is2004
                         ? "bg-[#0055ea]/30"
                         : isDark2026
                         ? "bg-white/30"
-                        : "bg-neutral-400/60"
+                        : "bg-neutral-400/70"
                     )}
                   />
                 )}

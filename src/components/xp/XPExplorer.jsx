@@ -391,12 +391,12 @@ const XPExplorer = () => {
       </div>
 
       {/* 5. Main Explorer Body (Split View) */}
-      <div className="flex-1 flex overflow-hidden bg-white border border-[#7f9db9] m-0.5">
+      <div className="flex-1 flex overflow-hidden bg-white border border-[#7f9db9] m-0.5 min-h-0">
         {/* Left Pane: Folders Tree */}
         {showFolders && (
-          <div className="w-[130px] sm:w-[210px] flex-shrink-0 flex flex-col bg-white border-r border-[#7f9db9] overflow-hidden">
+          <div className="w-[152px] sm:w-[215px] flex-shrink-0 flex flex-col bg-white border-r border-[#7f9db9] overflow-hidden">
             {/* Folders Header with [X] */}
-            <div className="h-[22px] px-2 bg-gradient-to-b from-[#f5f3ec] to-[#dedac5] border-b border-[#7f9db9] flex items-center justify-between text-[#000000] font-bold text-[11px]">
+            <div className="h-[22px] px-1.5 sm:px-2 bg-gradient-to-b from-[#f5f3ec] to-[#dedac5] border-b border-[#7f9db9] flex items-center justify-between text-[#000000] font-bold text-[11px] flex-shrink-0">
               <span>Folders</span>
               <button
                 type="button"
@@ -409,9 +409,9 @@ const XPExplorer = () => {
             </div>
 
             {/* Tree View Structure */}
-            <div className="flex-1 overflow-y-auto p-1.5 font-['Tahoma',sans-serif] text-[11px] select-none">
+            <div className="flex-1 overflow-y-auto overflow-x-auto p-1 sm:p-1.5 font-['Tahoma',sans-serif] text-[10.5px] sm:text-[11px] select-none">
               {/* Level 0: Desktop */}
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-max">
                 <div
                   onClick={() => navigateTo(locations.work)}
                   className="flex items-center gap-1 py-0.5 px-1 cursor-pointer hover:bg-[#316ac5]/10 rounded-[1px]"
@@ -419,20 +419,20 @@ const XPExplorer = () => {
                   <button
                     type="button"
                     onClick={(e) => toggleNode("desktop", e)}
-                    className="w-2.5 h-2.5 border border-gray-400 bg-white flex items-center justify-center text-[8px] font-mono leading-none mr-1"
+                    className="w-2.5 h-2.5 border border-gray-400 bg-white flex items-center justify-center text-[8px] font-mono leading-none mr-0.5 flex-shrink-0"
                   >
                     {expandedNodes.desktop ? "−" : "+"}
                   </button>
                   <img
                     src="/xp/Icon/This Computer.png"
                     alt=""
-                    className="w-4 h-4 object-contain"
+                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain flex-shrink-0"
                   />
-                  <span className="font-normal text-[#000000]">Desktop</span>
+                  <span className="font-normal text-[#000000] whitespace-nowrap">Desktop</span>
                 </div>
 
                 {expandedNodes.desktop && (
-                  <div className="pl-4 flex flex-col border-l border-dotted border-gray-300 ml-2 mt-0.5">
+                  <div className="pl-1.5 sm:pl-3.5 flex flex-col border-l border-dotted border-gray-300 ml-1 sm:ml-2 mt-0.5">
                     {/* My Documents */}
                     <div
                       onClick={() => navigateTo(locations.about)}
@@ -442,13 +442,13 @@ const XPExplorer = () => {
                           : "hover:bg-[#316ac5]/10 text-[#000000]"
                       }`}
                     >
-                      <span className="w-2.5 mr-1" />
+                      <span className="w-2.5 mr-0.5 flex-shrink-0" />
                       <img
                         src="/xp/Icon/My Documents.png"
                         alt=""
-                        className="w-4 h-4 object-contain"
+                        className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain flex-shrink-0"
                       />
-                      <span className="truncate">My Documents</span>
+                      <span className="whitespace-nowrap">My Documents</span>
                     </div>
 
                     {/* My Computer */}
@@ -464,29 +464,29 @@ const XPExplorer = () => {
                         <button
                           type="button"
                           onClick={(e) => toggleNode("my_computer", e)}
-                          className="w-2.5 h-2.5 border border-gray-400 bg-white flex items-center justify-center text-[8px] font-mono leading-none mr-1 text-black"
+                          className="w-2.5 h-2.5 border border-gray-400 bg-white flex items-center justify-center text-[8px] font-mono leading-none mr-0.5 text-black flex-shrink-0"
                         >
                           {expandedNodes.my_computer ? "−" : "+"}
                         </button>
                         <img
                           src="/xp/Icon/This Computer.png"
                           alt=""
-                          className="w-4 h-4 object-contain"
+                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain flex-shrink-0"
                         />
-                        <span className="truncate">My Computer</span>
+                        <span className="whitespace-nowrap">My Computer</span>
                       </div>
 
                       {expandedNodes.my_computer && (
-                        <div className="pl-4 flex flex-col border-l border-dotted border-gray-300 ml-2 mt-0.5">
+                        <div className="pl-1.5 sm:pl-3.5 flex flex-col border-l border-dotted border-gray-300 ml-1 sm:ml-2 mt-0.5">
                           {/* 3.5 Floppy */}
                           <div className="flex items-center gap-1 py-0.5 px-1 text-gray-500 opacity-70">
-                            <span className="w-2.5 mr-1" />
+                            <span className="w-2.5 mr-0.5 flex-shrink-0" />
                             <img
                               src="/xp/Icon/This Computer.png"
                               alt=""
-                              className="w-3.5 h-3.5 object-contain"
+                              className="w-3.5 h-3.5 object-contain flex-shrink-0"
                             />
-                            <span>3½ Floppy (A:)</span>
+                            <span className="whitespace-nowrap">3½ Floppy (A:)</span>
                           </div>
 
                           {/* Local Disk (C:) */}
@@ -498,20 +498,20 @@ const XPExplorer = () => {
                               <button
                                 type="button"
                                 onClick={(e) => toggleNode("local_c", e)}
-                                className="w-2.5 h-2.5 border border-gray-400 bg-white flex items-center justify-center text-[8px] font-mono leading-none mr-1 text-black"
+                                className="w-2.5 h-2.5 border border-gray-400 bg-white flex items-center justify-center text-[8px] font-mono leading-none mr-0.5 text-black flex-shrink-0"
                               >
                                 {expandedNodes.local_c ? "−" : "+"}
                               </button>
                               <img
                                 src="/xp/Icon/This Computer.png"
                                 alt=""
-                                className="w-3.5 h-3.5 object-contain"
+                                className="w-3.5 h-3.5 object-contain flex-shrink-0"
                               />
-                              <span className="truncate">Local Disk (C:)</span>
+                              <span className="whitespace-nowrap">Local Disk (C:)</span>
                             </div>
 
                             {expandedNodes.local_c && (
-                              <div className="pl-4 flex flex-col border-l border-dotted border-gray-300 ml-2 mt-0.5">
+                              <div className="pl-1.5 sm:pl-3.5 flex flex-col border-l border-dotted border-gray-300 ml-1 sm:ml-2 mt-0.5">
                                 {/* My Projects */}
                                 <div className="flex flex-col">
                                   <div
@@ -525,20 +525,20 @@ const XPExplorer = () => {
                                     <button
                                       type="button"
                                       onClick={(e) => toggleNode("my_projects", e)}
-                                      className="w-2.5 h-2.5 border border-gray-400 bg-white flex items-center justify-center text-[8px] font-mono leading-none mr-1 text-black"
+                                      className="w-2.5 h-2.5 border border-gray-400 bg-white flex items-center justify-center text-[8px] font-mono leading-none mr-0.5 text-black flex-shrink-0"
                                     >
                                       {expandedNodes.my_projects ? "−" : "+"}
                                     </button>
                                     <img
                                       src="/xp/Icon/My Documents.png"
                                       alt=""
-                                      className="w-3.5 h-3.5 object-contain"
+                                      className="w-3.5 h-3.5 object-contain flex-shrink-0"
                                     />
-                                    <span className="truncate font-medium">My Projects</span>
+                                    <span className="whitespace-nowrap font-medium">My Projects</span>
                                   </div>
 
                                   {expandedNodes.my_projects && (
-                                    <div className="pl-4 flex flex-col border-l border-dotted border-gray-300 ml-2 mt-0.5">
+                                    <div className="pl-1.5 sm:pl-3.5 flex flex-col border-l border-dotted border-gray-300 ml-1 sm:ml-2 mt-0.5">
                                       {locations.work.children?.map((proj) => (
                                         <div
                                           key={proj.id}
@@ -549,13 +549,12 @@ const XPExplorer = () => {
                                               : "hover:bg-[#316ac5]/10 text-[#000000]"
                                           }`}
                                         >
-                                          <span className="w-2 mr-1" />
                                           <img
                                             src="/xp/Icon/My Documents.png"
                                             alt=""
-                                            className="w-3.5 h-3.5 object-contain"
+                                            className="w-3.5 h-3.5 object-contain flex-shrink-0"
                                           />
-                                          <span className="truncate">{proj.name}</span>
+                                          <span className="whitespace-nowrap">{proj.name}</span>
                                         </div>
                                       ))}
                                     </div>
@@ -574,13 +573,13 @@ const XPExplorer = () => {
                                 : "hover:bg-[#316ac5]/10 text-[#000000]"
                             }`}
                           >
-                            <span className="w-2.5 mr-1" />
+                            <span className="w-2.5 mr-0.5 flex-shrink-0" />
                             <img
                               src="/xp/Icon/FileWord.png"
                               alt=""
-                              className="w-3.5 h-3.5 object-contain"
+                              className="w-3.5 h-3.5 object-contain flex-shrink-0"
                             />
-                            <span className="truncate">Resume.doc</span>
+                            <span className="whitespace-nowrap">Resume.doc</span>
                           </div>
                         </div>
                       )}
@@ -595,13 +594,13 @@ const XPExplorer = () => {
                           : "hover:bg-[#316ac5]/10 text-[#000000]"
                       }`}
                     >
-                      <span className="w-2.5 mr-1" />
+                      <span className="w-2.5 mr-0.5 flex-shrink-0" />
                       <img
                         src="/xp/Icon/Bin.png"
                         alt=""
-                        className="w-4 h-4 object-contain"
+                        className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain flex-shrink-0"
                       />
-                      <span className="truncate">Recycle Bin</span>
+                      <span className="whitespace-nowrap">Recycle Bin</span>
                     </div>
                   </div>
                 )}
@@ -613,14 +612,14 @@ const XPExplorer = () => {
         {/* Right Pane: File View Area */}
         <div
           onClick={() => setSelectedItemId(null)}
-          className="flex-1 bg-white overflow-y-auto p-4 content-start"
+          className="flex-1 bg-white overflow-y-auto p-2.5 sm:p-4 content-start min-w-0"
         >
           {currentItems.length === 0 ? (
             <div className="h-full flex items-center justify-center text-gray-400 italic">
               This folder is empty.
             </div>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-x-3 gap-y-5 items-start">
+            <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-x-2 sm:gap-x-3 gap-y-4 sm:gap-y-5 items-start">
               {currentItems.map((item) => {
                 const isSelected = selectedItemId === item.id;
                 const itemIcon = getFileIcon(item);
@@ -630,7 +629,11 @@ const XPExplorer = () => {
                     key={item.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedItemId(item.id);
+                      if (window.innerWidth < 640 || selectedItemId === item.id) {
+                        openItem(item);
+                      } else {
+                        setSelectedItemId(item.id);
+                      }
                     }}
                     onDoubleClick={(e) => {
                       e.stopPropagation();
@@ -643,7 +646,7 @@ const XPExplorer = () => {
                     }`}
                   >
                     {/* Icon container */}
-                    <div className="w-10 h-10 flex items-center justify-center mb-1 flex-shrink-0">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center mb-1 flex-shrink-0">
                       <img
                         src={itemIcon}
                         alt={item.name}
@@ -653,7 +656,7 @@ const XPExplorer = () => {
 
                     {/* Label */}
                     <span
-                      className={`text-[11px] leading-tight px-1 py-0.5 rounded-[1px] break-words line-clamp-2 ${
+                      className={`text-[10.5px] sm:text-[11px] leading-tight px-1 py-0.5 rounded-[1px] break-words line-clamp-2 ${
                         isSelected
                           ? "bg-[#316ac5] text-white border border-dotted border-[#0a246a]"
                           : "text-[#000000]"
@@ -670,19 +673,19 @@ const XPExplorer = () => {
       </div>
 
       {/* 6. Classic Windows XP 3D Status Bar */}
-      <div className="h-[22px] px-1 bg-[#ece9d8] border-t border-[#d8d2bd] flex items-center gap-1 text-[11px] text-[#000000] flex-shrink-0 font-['Tahoma',sans-serif]">
+      <div className="h-[22px] px-1 bg-[#ece9d8] border-t border-[#d8d2bd] flex items-center gap-1 text-[10.5px] sm:text-[11px] text-[#000000] flex-shrink-0 font-['Tahoma',sans-serif]">
         {/* Panel 1: Objects Count */}
-        <div className="flex-1 h-[18px] px-2 flex items-center bg-[#ece9d8] shadow-[inset_1px_1px_1px_#808080,inset_-1px_-1px_1px_#ffffff] text-[#000000] truncate">
+        <div className="flex-1 h-[18px] px-1.5 sm:px-2 flex items-center bg-[#ece9d8] shadow-[inset_1px_1px_1px_#808080,inset_-1px_-1px_1px_#ffffff] text-[#000000] truncate">
           <span>{currentItems.length} objects</span>
         </div>
 
         {/* Panel 2: Size / Status */}
-        <div className="w-[120px] h-[18px] px-2 flex items-center bg-[#ece9d8] shadow-[inset_1px_1px_1px_#808080,inset_-1px_-1px_1px_#ffffff] text-[#000000] truncate">
+        <div className="w-[68px] sm:w-[120px] h-[18px] px-1.5 sm:px-2 flex items-center bg-[#ece9d8] shadow-[inset_1px_1px_1px_#808080,inset_-1px_-1px_1px_#ffffff] text-[#000000] truncate">
           <span>6.53 MB</span>
         </div>
 
         {/* Panel 3: Location / Zone */}
-        <div className="w-[130px] h-[18px] px-2 flex items-center gap-1.5 bg-[#ece9d8] shadow-[inset_1px_1px_1px_#808080,inset_-1px_-1px_1px_#ffffff] text-[#000000] truncate">
+        <div className="w-[105px] sm:w-[130px] h-[18px] px-1.5 sm:px-2 flex items-center gap-1 sm:gap-1.5 bg-[#ece9d8] shadow-[inset_1px_1px_1px_#808080,inset_-1px_-1px_1px_#ffffff] text-[#000000] truncate">
           <img
             src="/xp/Icon/This Computer.png"
             alt=""

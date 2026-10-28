@@ -64,7 +64,7 @@ const XPStartMenu = ({ isOpen, onClose }) => {
       {/* 2. Two-Column Body */}
       <div className="flex bg-white w-full border-t border-[#407ee8]">
         {/* Left Column (White background, Programs) */}
-        <div className="flex-1 min-w-[200px] p-1.5 flex flex-col justify-between bg-white border-r border-[#95bdee]">
+        <div className="flex-1 min-w-0 p-1.5 flex flex-col justify-between bg-white border-r border-[#95bdee]">
           <div className="flex flex-col gap-0.5">
             {/* Pinned 1: Command Prompt */}
             <button
@@ -212,7 +212,7 @@ const XPStartMenu = ({ isOpen, onClose }) => {
         </div>
 
         {/* Right Column (Light Blue background, System folders & settings) */}
-        <div className="w-[176px] p-1.5 flex flex-col justify-start bg-[#d3e5fa] gap-0.5">
+        <div className="w-[152px] sm:w-[176px] flex-shrink-0 p-1.5 flex flex-col justify-start bg-[#d3e5fa] gap-0.5">
           {/* My Documents */}
           <button
             type="button"

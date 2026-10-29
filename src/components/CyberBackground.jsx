@@ -274,7 +274,8 @@ const CyberBackground = () => {
     let cachedDpr = 1;
     let cachedTargetFontSize = 0;
     let cachedHorizontalPad = 2;
-    let cachedCharGap = 1;
+    let cachedCharGap = 5;
+    let cachedRowGap = 0;
     let needsTextureRedraw = true;
 
     const textCtx = textCanvas.getContext("2d");
@@ -326,20 +327,34 @@ const CyberBackground = () => {
       textCtx.fillRect(0, 0, width, height);
 
       const rowHeight = cachedRowHeight;
+      const rowGap = cachedRowGap;
       const offsetY = cachedOffsetY;
       const isMouseActive = mousePixel.targetX >= 0 && mousePixel.targetY >= 0;
       const startX = cachedHorizontalPad;
       const availableWidth = width - cachedHorizontalPad * 2;
       const charGap = cachedCharGap;
 
+      textCtx.font = `900 ${cachedTargetFontSize}px 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif`;
       textCtx.textBaseline = "middle";
       textCtx.textAlign = "left";
       textCtx.fillStyle = "#ffffff";
 
+      const isPortrait = width < 640 || height > width * 0.95;
+      let scaleY = 1.0;
+      let inkOffsetY = 0.0;
+      if (!isPortrait) {
+        const capM = textCtx.measureText("H");
+        const capAscent = capM.actualBoundingBoxAscent || cachedTargetFontSize * 0.355;
+        const capDescent = capM.actualBoundingBoxDescent || cachedTargetFontSize * 0.355;
+        const measuredCapH = Math.max(capAscent + capDescent, 1);
+        scaleY = rowHeight / measuredCapH;
+        inkOffsetY = (capAscent - capDescent) / 2;
+      }
+
       cachedMetrics.forEach((lineData, lineIdx) => {
         const { chars, metrics, totalBaseInkW } = lineData;
         const numChars = chars.length;
-        const rowCenterY = offsetY + (lineIdx + 0.5) * rowHeight;
+        const rowCenterY = offsetY + lineIdx * (rowHeight + rowGap) + 0.5 * rowHeight;
         const distY = Math.abs(mousePixel.y - rowCenterY);
 
         // Continuous C1-smooth vertical influence factor (smooth transition between rows)
@@ -428,8 +443,8 @@ const CyberBackground = () => {
             const scaleX = slotW / m.inkW;
             textCtx.save();
             textCtx.translate(currX, rowCenterY);
-            textCtx.scale(scaleX, 1);
-            textCtx.fillText(char, m.left, 0);
+            textCtx.scale(scaleX, scaleY);
+            textCtx.fillText(char, m.left, inkOffsetY);
             textCtx.restore();
           }
 
@@ -489,11 +504,12 @@ const CyberBackground = () => {
         holdTimers = activeLines.map((l) => new Float32Array(l.text.length));
       }
 
-      let rowHeight = height / 3;
-      let targetFontSize = (rowHeight / 0.7) * 0.95;
-      let offsetY = 0;
-      let horizontalPad = 2;
-      let charGap = 1;
+      let rowHeight;
+      let rowGap = 0;
+      let targetFontSize;
+      let offsetY;
+      let horizontalPad;
+      let charGap;
 
       if (isPortrait) {
         // Mobile vertical layout: 4 stacked rows positioned neatly between Timeline and 2x2 Folders
@@ -505,9 +521,25 @@ const CyberBackground = () => {
         offsetY = topBound;
         horizontalPad = Math.max(12, Math.round(width * 0.036));
         charGap = 2;
+        rowGap = 0;
+      } else {
+        // Desktop landscape layout: 3 rows stretching to fill background with 5px row gaps and 5px char gaps
+        const navEl = document.querySelector("nav");
+        const navHeight = navEl ? navEl.offsetHeight : 44;
+        const topBound = navHeight;
+        const bottomBound = height;
+        const blockHeight = bottomBound - topBound;
+        rowGap = 5;
+        const totalRowGaps = (activeLines.length - 1) * rowGap;
+        rowHeight = (blockHeight - totalRowGaps) / activeLines.length;
+        targetFontSize = rowHeight / 0.70;
+        offsetY = topBound;
+        horizontalPad = 2;
+        charGap = 5;
       }
 
       cachedRowHeight = rowHeight;
+      cachedRowGap = rowGap;
       cachedOffsetY = offsetY;
       cachedTargetFontSize = targetFontSize;
       cachedHorizontalPad = horizontalPad;
@@ -523,8 +555,7 @@ const CyberBackground = () => {
     if (document.fonts) {
       document.fonts.ready.then(() => {
         if (!isRunning) return;
-        cachedMetrics = computeMetrics(cachedTargetFontSize);
-        needsTextureRedraw = true;
+        resizeCanvas();
       });
     }
 

@@ -305,8 +305,8 @@ export default class TunnelEngine {
     const blueRailsMesh = new THREE.LineSegments(railsGeo, this.blueMat);
     const blueRingsMesh = new THREE.LineSegments(ringsGeo, this.ringMat);
     const greenRailsMesh = new THREE.LineSegments(railsGeo, this.greenMat);
-    const nodesMesh = new THREE.Points(nodeGeo, this.nodeMat);
-    const particlesMesh = new THREE.Points(particleGeo, this.particleMat);
+    const _nodesMesh = new THREE.Points(nodeGeo, this.nodeMat);
+    const _particlesMesh = new THREE.Points(particleGeo, this.particleMat);
 
     // Thêm các lưới chính (bao gồm greenRailsMesh để tái hiện Hiệu ứng chồng màu kép Cyan + Emerald Green)
     [blueRailsMesh, greenRailsMesh, blueRingsMesh].forEach(

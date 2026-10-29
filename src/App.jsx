@@ -4,7 +4,7 @@ import {
   CyberBackground,
   Dock,
   Home,
-  LiquidOrb,
+  GlassCube,
   Navbar,
   TimelineSelector,
   Welcome,
@@ -106,7 +106,7 @@ const App = () => {
       )}
     >
       <CyberBackground />
-      <LiquidOrb />
+      <GlassCube />
       <Navbar />
       <TimelineSelector />
       <Welcome />

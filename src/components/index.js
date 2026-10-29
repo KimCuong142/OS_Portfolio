@@ -6,6 +6,7 @@ import Home from "#components/Home.jsx";
 import CyberBackground from "#components/CyberBackground.jsx";
 import TimelineSelector from "#components/TimelineSelector.jsx";
 import XPTaskbar from "#components/xp/XPTaskbar.jsx";
+import GlassCube from "#components/GlassCube.jsx";
 import LiquidOrb from "#components/LiquidOrb.jsx";
 
 export {
@@ -17,5 +18,6 @@ export {
   CyberBackground,
   TimelineSelector,
   XPTaskbar,
+  GlassCube,
   LiquidOrb,
 };

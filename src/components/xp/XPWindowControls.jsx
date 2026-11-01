@@ -45,17 +45,18 @@ const XPWindowControls = ({ target }) => {
         </div>
 
         {/* Right: Window Action Buttons */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 max-sm:gap-1.5 flex-shrink-0 touch-manipulation">
           {/* Minimize */}
           <button
             type="button"
             title="Minimize"
             aria-label="Minimize"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               toggleMinimize(target);
             }}
-            className="w-[21px] h-[21px] rounded-[3px] border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_1px_2px_rgba(0,0,0,0.4)] bg-gradient-to-b from-[#428eff] via-[#0055ea] to-[#0038b0] hover:from-[#66a3ff] hover:to-[#1a66ff] active:from-[#0038b0] active:to-[#002275] flex items-center justify-center cursor-pointer transition-all focus:outline-none"
+            className="w-[21px] h-[21px] relative touch-manipulation active:scale-95 before:content-[''] before:absolute before:-inset-2 sm:before:hidden before:z-10 rounded-[3px] border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_1px_2px_rgba(0,0,0,0.4)] bg-gradient-to-b from-[#428eff] via-[#0055ea] to-[#0038b0] hover:from-[#66a3ff] hover:to-[#1a66ff] active:from-[#0038b0] active:to-[#002275] flex items-center justify-center cursor-pointer transition-all focus:outline-none"
           >
             <span className="w-2.5 h-[2.5px] bg-white rounded-[0.5px] shadow-[0_1px_1px_rgba(0,0,0,0.6)] translate-y-[2px]" />
           </button>
@@ -65,11 +66,12 @@ const XPWindowControls = ({ target }) => {
             type="button"
             title={isMaximized ? "Restore" : "Maximize"}
             aria-label={isMaximized ? "Restore" : "Maximize"}
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               toggleMaximize(target);
             }}
-            className="w-[21px] h-[21px] rounded-[3px] border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_1px_2px_rgba(0,0,0,0.4)] bg-gradient-to-b from-[#428eff] via-[#0055ea] to-[#0038b0] hover:from-[#66a3ff] hover:to-[#1a66ff] active:from-[#0038b0] active:to-[#002275] flex items-center justify-center cursor-pointer transition-all focus:outline-none"
+            className="w-[21px] h-[21px] relative touch-manipulation active:scale-95 before:content-[''] before:absolute before:-inset-2 sm:before:hidden before:z-10 rounded-[3px] border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_1px_2px_rgba(0,0,0,0.4)] bg-gradient-to-b from-[#428eff] via-[#0055ea] to-[#0038b0] hover:from-[#66a3ff] hover:to-[#1a66ff] active:from-[#0038b0] active:to-[#002275] flex items-center justify-center cursor-pointer transition-all focus:outline-none"
           >
             {isMaximized ? (
               <div className="relative w-2.5 h-2.5">
@@ -86,11 +88,12 @@ const XPWindowControls = ({ target }) => {
             type="button"
             title="Close"
             aria-label="Close"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               closeWindow(target);
             }}
-            className="w-[21px] h-[21px] rounded-[3px] border border-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_1px_2px_rgba(0,0,0,0.5)] bg-gradient-to-b from-[#e5603b] via-[#cf3312] to-[#b01c00] hover:from-[#ff7952] hover:to-[#e62a05] active:from-[#9c1200] active:to-[#780800] flex items-center justify-center cursor-pointer transition-all focus:outline-none ml-0.5"
+            className="w-[21px] h-[21px] relative touch-manipulation active:scale-95 before:content-[''] before:absolute before:-inset-2 sm:before:hidden before:z-10 rounded-[3px] border border-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_1px_2px_rgba(0,0,0,0.5)] bg-gradient-to-b from-[#e5603b] via-[#cf3312] to-[#b01c00] hover:from-[#ff7952] hover:to-[#e62a05] active:from-[#9c1200] active:to-[#780800] flex items-center justify-center cursor-pointer transition-all focus:outline-none ml-0.5"
           >
             <svg
               viewBox="0 0 10 10"

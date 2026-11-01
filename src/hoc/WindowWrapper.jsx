@@ -73,7 +73,15 @@ const WindowWrapper = (Component, windowkey) => {
       const el = ref.current;
       if (!el) return;
 
-      const onPointerDownCapture = () => {
+      const onPointerDownCapture = (e) => {
+        // Do not interrupt window controls during touch/pointer interactions
+        if (
+          e.target &&
+          typeof e.target.closest === "function" &&
+          e.target.closest("#window-controls, #xp-window-controls")
+        ) {
+          return;
+        }
         handleFocus();
       };
 
@@ -98,7 +106,13 @@ const WindowWrapper = (Component, windowkey) => {
         gsap.set(el, { x: 0 });
       }
 
+      const headerEl = el.querySelector("#window-header");
+
       const [instance] = Draggable.create(el, {
+        trigger: headerEl || el,
+        cancel:
+          "#window-controls, #window-controls *, #xp-window-controls, #xp-window-controls *, button, a, input, textarea, select, .no-drag",
+        dragClickables: false,
         zIndexBoost: false, // Prevents GSAP from reverting zIndex to old value after dragging
         onPress: handleFocus,
         onDragStart: () => {
@@ -206,6 +220,7 @@ const WindowWrapper = (Component, windowkey) => {
     const handleDoubleClick = (e) => {
       if (
         e.target.closest("#window-controls") ||
+        e.target.closest("#xp-window-controls") ||
         e.target.closest("button") ||
         e.target.closest("input")
       ) {

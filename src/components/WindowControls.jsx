@@ -14,26 +14,30 @@ const WindowControls = ({ target }) => {
   }
 
   return (
-    <div id="window-controls" className="group flex items-center gap-2">
+    <div
+      id="window-controls"
+      className="group flex items-center gap-2 max-sm:gap-2.5 select-none touch-manipulation py-1"
+    >
       {/* Close - Red */}
       <button
         type="button"
-        className="close relative flex items-center justify-center size-3.5 rounded-full bg-[#ff5f56] hover:bg-[#e0443e] active:bg-[#c9322c] border border-black/10 transition-colors cursor-pointer"
+        className="close relative flex items-center justify-center size-3.5 rounded-full bg-[#ff5f56] hover:bg-[#e0443e] active:bg-[#c9322c] border border-black/15 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)] transition-all cursor-pointer touch-manipulation active:scale-90 before:content-[''] before:absolute before:-inset-y-3 before:-inset-x-1.5 sm:before:hidden before:z-10"
         title="Close"
         aria-label="Close window"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           closeWindow(target);
         }}
       >
         <svg
-          viewBox="0 0 10 10"
-          className="size-2 text-[#4d0000] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
+          viewBox="0 0 12 12"
+          className="size-3 text-[#4d0000] opacity-85 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
         >
           <path
-            d="M2.2 2.2L7.8 7.8M7.8 2.2L2.2 7.8"
+            d="M2.7 2.7l6.6 6.6M9.3 2.7l-6.6 6.6"
             stroke="currentColor"
-            strokeWidth="1.4"
+            strokeWidth="1.5"
             strokeLinecap="round"
           />
         </svg>
@@ -42,23 +46,26 @@ const WindowControls = ({ target }) => {
       {/* Minimize - Yellow */}
       <button
         type="button"
-        className="minimize relative flex items-center justify-center size-3.5 rounded-full bg-[#ffbd2e] hover:bg-[#dea123] active:bg-[#c48d1b] border border-black/10 transition-colors cursor-pointer"
+        className="minimize relative flex items-center justify-center size-3.5 rounded-full bg-[#ffbd2e] hover:bg-[#dea123] active:bg-[#c48d1b] border border-black/15 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)] transition-all cursor-pointer touch-manipulation active:scale-90 before:content-[''] before:absolute before:-inset-y-3 before:-inset-x-1.5 sm:before:hidden before:z-10"
         title="Minimize"
         aria-label="Minimize window"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           toggleMinimize(target);
         }}
       >
         <svg
-          viewBox="0 0 10 10"
-          className="size-2 text-[#5d3200] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
+          viewBox="0 0 12 12"
+          className="size-3 text-[#5d3200] opacity-85 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
         >
-          <path
-            d="M2 5H8"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
+          <rect
+            x="2.2"
+            y="5.1"
+            width="7.6"
+            height="1.8"
+            rx="0.9"
+            fill="currentColor"
           />
         </svg>
       </button>
@@ -66,9 +73,10 @@ const WindowControls = ({ target }) => {
       {/* Maximize / Zoom - Green */}
       <button
         type="button"
-        className="maximize relative flex items-center justify-center size-3.5 rounded-full bg-[#27c93f] hover:bg-[#1aab29] active:bg-[#159423] border border-black/10 transition-colors cursor-pointer"
+        className="maximize relative flex items-center justify-center size-3.5 rounded-full bg-[#27c93f] hover:bg-[#1aab29] active:bg-[#159423] border border-black/15 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)] transition-all cursor-pointer touch-manipulation active:scale-90 before:content-[''] before:absolute before:-inset-y-3 before:-inset-x-1.5 sm:before:hidden before:z-10"
         title={isMaximized ? "Restore" : "Zoom"}
         aria-label={isMaximized ? "Restore window" : "Maximize window"}
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           toggleMaximize(target);
@@ -76,27 +84,30 @@ const WindowControls = ({ target }) => {
       >
         {isMaximized ? (
           <svg
-            viewBox="0 0 10 10"
-            className="size-2 text-[#004d00] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
+            viewBox="0 0 12 12"
+            className="size-3 text-[#004d00] opacity-85 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
           >
-            {/* Inward arrows for restore */}
+            {/* 2 tam giác vuông đối xứng qua đường chéo cho Restore */}
             <path
-              d="M4 1.5v2.5H1.5M6 8.5V6h2.5"
+              d="M9.8 2.2H4L9.8 8ZM2.2 9.8h5.8L2.2 4Z"
+              fill="currentColor"
               stroke="currentColor"
-              strokeWidth="1.2"
-              strokeLinecap="round"
+              strokeWidth="0.7"
               strokeLinejoin="round"
             />
           </svg>
         ) : (
           <svg
-            viewBox="0 0 10 10"
-            className="size-2 text-[#004d00] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
+            viewBox="0 0 12 12"
+            className="size-3 text-[#004d00] opacity-85 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
           >
-            {/* Outward diagonal arrows for maximize */}
+            {/* 2 tam giác vuông chuẩn macOS đối xứng chéo qua rãnh 45 độ cho Zoom */}
             <path
-              d="M2 3.5L5 2L3.5 5M8 6.5L5 8L6.5 5"
+              d="M2.2 2.2h5.8L2.2 8ZM9.8 9.8H4l5.8-5.8Z"
               fill="currentColor"
+              stroke="currentColor"
+              strokeWidth="0.7"
+              strokeLinejoin="round"
             />
           </svg>
         )}

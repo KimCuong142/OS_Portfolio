@@ -93,10 +93,10 @@ const CyberBackground = () => {
           }
           uvDir = normDir / aspect;
 
-          // Thu hẹp biên độ lan tỏa: Giữ quầng tán sắc ôm sát chữ (~4px - 8px), không bị loang xa
+          // Biên độ lan tỏa viền chữ: 12px - 16px cho hướng nghiêng chính, 4px - 8px cho hướng phản chiếu đối diện
           float tiltFactor = smoothstep(0.02, 0.75, tiltLen);
-          dispAmountR = (tiltFactor * 0.008 + 0.001) * u_strength;
-          dispAmountB = (tiltFactor * 0.0035) * u_strength;
+          dispAmountR = (tiltFactor * 0.016 + 0.0035) * u_strength;
+          dispAmountB = (tiltFactor * 0.008 + 0.0015) * u_strength;
         } else {
           // --- Desktop Mouse Tracking Mode ---
           vec2 diff = (vUv - u_mouse) * aspect;
@@ -148,7 +148,7 @@ const CyberBackground = () => {
 
         // Feathered aura OUTSIDE the letters (remove inside text)
         float auraOut = clamp(sampleR * 1.45 * (1.0 - textMask), 0.0, 1.0);
-        float auraIn = clamp(sampleB * (u_use_gyro > 0.5 ? 0.70 : 1.25) * (1.0 - textMask), 0.0, 1.0);
+        float auraIn = clamp(sampleB * (u_use_gyro > 0.5 ? 0.85 : 1.25) * (1.0 - textMask), 0.0, 1.0);
 
         vec3 bgColor;
         vec3 textColor;

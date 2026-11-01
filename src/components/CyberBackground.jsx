@@ -62,6 +62,8 @@ const CyberBackground = () => {
       uniform vec2 u_resolution;
       uniform float u_is_dark;
       uniform float u_time;
+      uniform vec2 u_tilt;
+      uniform float u_use_gyro;
       varying vec2 vUv;
 
       // Smooth HSV to RGB conversion
@@ -74,53 +76,78 @@ const CyberBackground = () => {
       void main() {
         // Correct aspect ratio for circular interaction radius
         vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
-        vec2 diff = (vUv - u_mouse) * aspect;
-        float dist = length(diff);
+        vec2 uvDir = vec2(0.0);
+        float dispAmountR = 0.0;
+        float dispAmountB = 0.0;
+        float dist = 0.5;
+        float radiusR = 1.0;
+        float radiusB = 1.0;
 
-        // Aspect-corrected normalized direction
-        vec2 normDir = vec2(0.0);
-        if (dist > 0.0001) {
-          normDir = diff / dist;
+        if (u_use_gyro > 0.5) {
+          // --- Mobile Gyroscope Mode ---
+          // Lan tỏa hiệu ứng tán sắc theo hướng nghiêng của điện thoại
+          float tiltLen = length(u_tilt);
+          vec2 normDir = vec2(0.0);
+          if (tiltLen > 0.001) {
+            normDir = u_tilt / tiltLen;
+          }
+          uvDir = normDir / aspect;
+
+          float tiltFactor = smoothstep(0.02, 0.75, tiltLen);
+          dispAmountR = (tiltFactor * 0.038 + 0.002) * u_strength * 2.86;
+          dispAmountB = (tiltFactor * 0.012) * u_strength * 2.106;
+        } else {
+          // --- Desktop Mouse Tracking Mode ---
+          vec2 diff = (vUv - u_mouse) * aspect;
+          dist = length(diff);
+
+          vec2 normDir = vec2(0.0);
+          if (dist > 0.0001) {
+            normDir = diff / dist;
+          }
+          uvDir = normDir / aspect;
+
+          // Sensitivity & reach for side facing towards mouse (hướng vô: reduced another 10%)
+          radiusB = u_radius * 1.4175;
+          float proximityB = clamp(1.0 - dist / radiusB, 0.0, 1.0);
+          float peakB = pow(proximityB, 1.8);
+          dispAmountB = (peakB * 0.038 + proximityB * 0.008) * u_strength * 2.106;
+
+          // Enhanced sensitivity & reach for side facing away from mouse (hướng ra)
+          radiusR = u_radius * 1.925;
+          float proximityR = clamp(1.0 - dist / radiusR, 0.0, 1.0);
+          float peakR = pow(proximityR, 1.8);
+          dispAmountR = (peakR * 0.038 + proximityR * 0.008) * u_strength * 2.86;
         }
-        // Direction mapped back to UV space for uniform pixel offsets
-        vec2 uvDir = normDir / aspect;
-
-        // Sensitivity & reach for side facing towards mouse (hướng vô: reduced another 10%)
-        float radiusB = u_radius * 1.4175;
-        float proximityB = clamp(1.0 - dist / radiusB, 0.0, 1.0);
-        float peakB = pow(proximityB, 1.8);
-        float dispAmountB = (peakB * 0.038 + proximityB * 0.008) * u_strength * 2.106;
-
-        // Enhanced sensitivity & reach for side facing away from mouse (hướng ra)
-        float radiusR = u_radius * 1.925;
-        float proximityR = clamp(1.0 - dist / radiusR, 0.0, 1.0);
-        float peakR = pow(proximityR, 1.8);
-        float dispAmountR = (peakR * 0.038 + proximityR * 0.008) * u_strength * 2.86;
 
         // Texture holds 1.0 for text and 0.0 for background
         float textMask = texture2D(u_texture, vUv).r;
 
-        // Multi-tap soft sampling along uvDir for smooth feathered neon glow
+        // Multi-tap soft sampling along uvDir for smooth feathered pastel dispersion
         float sampleR = 0.0;
         float sampleB = 0.0;
 
         if (dispAmountR > 0.0004) {
-          sampleR += texture2D(u_texture, clamp(vUv - uvDir * (dispAmountR * 0.20), 0.0, 1.0)).r * 0.35;
-          sampleR += texture2D(u_texture, clamp(vUv - uvDir * (dispAmountR * 0.50), 0.0, 1.0)).r * 0.30;
-          sampleR += texture2D(u_texture, clamp(vUv - uvDir * (dispAmountR * 0.80), 0.0, 1.0)).r * 0.20;
-          sampleR += texture2D(u_texture, clamp(vUv - uvDir * (dispAmountR * 1.10), 0.0, 1.0)).r * 0.15;
+          sampleR += texture2D(u_texture, clamp(vUv - uvDir * (dispAmountR * 0.15), 0.0, 1.0)).r * 0.24;
+          sampleR += texture2D(u_texture, clamp(vUv - uvDir * (dispAmountR * 0.35), 0.0, 1.0)).r * 0.22;
+          sampleR += texture2D(u_texture, clamp(vUv - uvDir * (dispAmountR * 0.55), 0.0, 1.0)).r * 0.19;
+          sampleR += texture2D(u_texture, clamp(vUv - uvDir * (dispAmountR * 0.75), 0.0, 1.0)).r * 0.15;
+          sampleR += texture2D(u_texture, clamp(vUv - uvDir * (dispAmountR * 0.95), 0.0, 1.0)).r * 0.12;
+          sampleR += texture2D(u_texture, clamp(vUv - uvDir * (dispAmountR * 1.15), 0.0, 1.0)).r * 0.08;
         }
 
         if (dispAmountB > 0.0004) {
-          sampleB += texture2D(u_texture, clamp(vUv + uvDir * (dispAmountB * 0.20), 0.0, 1.0)).r * 0.35;
-          sampleB += texture2D(u_texture, clamp(vUv + uvDir * (dispAmountB * 0.50), 0.0, 1.0)).r * 0.30;
-          sampleB += texture2D(u_texture, clamp(vUv + uvDir * (dispAmountB * 0.80), 0.0, 1.0)).r * 0.20;
-          sampleB += texture2D(u_texture, clamp(vUv + uvDir * (dispAmountB * 1.10), 0.0, 1.0)).r * 0.15;
+          sampleB += texture2D(u_texture, clamp(vUv + uvDir * (dispAmountB * 0.15), 0.0, 1.0)).r * 0.24;
+          sampleB += texture2D(u_texture, clamp(vUv + uvDir * (dispAmountB * 0.35), 0.0, 1.0)).r * 0.22;
+          sampleB += texture2D(u_texture, clamp(vUv + uvDir * (dispAmountB * 0.55), 0.0, 1.0)).r * 0.19;
+          sampleB += texture2D(u_texture, clamp(vUv + uvDir * (dispAmountB * 0.75), 0.0, 1.0)).r * 0.15;
+          sampleB += texture2D(u_texture, clamp(vUv + uvDir * (dispAmountB * 0.95), 0.0, 1.0)).r * 0.12;
+          sampleB += texture2D(u_texture, clamp(vUv + uvDir * (dispAmountB * 1.15), 0.0, 1.0)).r * 0.08;
         }
 
-        // ONLY keep aura OUTSIDE the letters (remove inside text)
-        float auraOut = clamp(sampleR * 1.7875 * (1.0 - textMask), 0.0, 1.0);
-        float auraIn = clamp(sampleB * 1.31625 * (1.0 - textMask), 0.0, 1.0);
+        // Feathered aura OUTSIDE the letters (remove inside text)
+        float auraOut = clamp(sampleR * 1.45 * (1.0 - textMask), 0.0, 1.0);
+        float auraIn = clamp(sampleB * (u_use_gyro > 0.5 ? 0.70 : 1.25) * (1.0 - textMask), 0.0, 1.0);
 
         vec3 bgColor;
         vec3 textColor;
@@ -130,36 +157,44 @@ const CyberBackground = () => {
           bgColor = vec3(0.0, 0.0, 0.0);         // #000000 Nền đen
           textColor = vec3(0.60, 0.62, 0.66);    // #999ea8 Chữ xám
         } else {
-          // Light Mode: Nền trắng tinh khiết, chữ màu xanh xám pastel (#b7c4d5) chuẩn theo ảnh mẫu
+          // Light Mode: Nền trắng tinh khiết, chữ màu xanh xám pastel (#b7c4d5)
           bgColor = vec3(1.0, 1.0, 1.0);         // #ffffff Nền trắng
           textColor = vec3(0.718, 0.769, 0.835); // #b7c4d5 Chữ xanh xám pastel
         }
 
         // Dynamic continuous color spectrum cycling over time
         float baseHue = fract(u_time * 0.065);
+        float tiltAngle = (u_use_gyro > 0.5 && length(u_tilt) > 0.02)
+          ? (atan(u_tilt.y, u_tilt.x) / 6.2831853)
+          : 0.0;
 
         // 2 opposing (complementary) sides: exactly 180 degrees (0.50) apart on color wheel
-        float hueIn = fract(baseHue + 0.22); // Hướng vô (towards mouse)
-        float hueOut = fract(hueIn + 0.50);  // Hướng ra (away from mouse, 180 deg opposite)
+        float hueIn = fract(baseHue + tiltAngle + 0.22); // Hướng vô / theo góc nghiêng
+        float hueOut = fract(hueIn + 0.50);              // Hướng ra (180 deg opposite)
 
-        // Saturation and Value based on theme mode
-        float sat = (u_is_dark > 0.5) ? 0.96 : 0.98;
-        float val = (u_is_dark > 0.5) ? 1.00 : 0.88;
+        // Pastel tones: low-to-moderate saturation, high brightness
+        // Giảm độ rực, chuyển sang tone màu pastel trang nhã (mint, lavender, peach, powder blue, soft rose)
+        float sat = (u_is_dark > 0.5) ? 0.44 : 0.34;
+        float val = (u_is_dark > 0.5) ? 0.96 : 0.98;
 
-        // 2-stop gradient colors for Hướng Ra (away from mouse)
+        // 2-stop pastel gradient colors for Hướng Ra (in tilt direction / away from mouse)
         vec3 colorOut1 = hsv2rgb(vec3(hueOut, sat, val));
-        vec3 colorOut2 = hsv2rgb(vec3(fract(hueOut + 0.09), sat * 0.94, val));
+        vec3 colorOut2 = hsv2rgb(vec3(fract(hueOut + 0.08), sat * 0.88, val));
 
-        // 2-stop gradient colors for Hướng Vô (towards mouse)
+        // 2-stop pastel gradient colors for Hướng Vô (opposite direction)
         vec3 colorIn1 = hsv2rgb(vec3(hueIn, sat, val));
-        vec3 colorIn2 = hsv2rgb(vec3(fract(hueIn + 0.09), sat * 0.94, val));
+        vec3 colorIn2 = hsv2rgb(vec3(fract(hueIn + 0.08), sat * 0.88, val));
 
         // Gradient Hướng Ra: Lõi sóng colorOut1, tản dần sang colorOut2
-        float t1 = clamp((1.0 - sampleR) * 0.60 + (dist / radiusR) * 0.40, 0.0, 1.0);
+        float t1 = (u_use_gyro > 0.5)
+          ? clamp((1.0 - sampleR) * 0.85, 0.0, 1.0)
+          : clamp((1.0 - sampleR) * 0.60 + (dist / radiusR) * 0.40, 0.0, 1.0);
         vec3 gradOut = mix(colorOut1, colorOut2, t1);
 
         // Gradient Hướng Vô: Lõi sóng colorIn1, tản dần sang colorIn2
-        float t2 = clamp((1.0 - sampleB) * 0.60 + (dist / radiusB) * 0.40, 0.0, 1.0);
+        float t2 = (u_use_gyro > 0.5)
+          ? clamp((1.0 - sampleB) * 0.85, 0.0, 1.0)
+          : clamp((1.0 - sampleB) * 0.60 + (dist / radiusB) * 0.40, 0.0, 1.0);
         vec3 gradIn = mix(colorIn1, colorIn2, t2);
 
         // Blend the two opposing gradient halos smoothly without bias
@@ -209,6 +244,8 @@ const CyberBackground = () => {
     const uResolutionLoc = gl.getUniformLocation(program, "u_resolution");
     const uIsDarkLoc = gl.getUniformLocation(program, "u_is_dark");
     const uTimeLoc = gl.getUniformLocation(program, "u_time");
+    const uTiltLoc = gl.getUniformLocation(program, "u_tilt");
+    const uUseGyroLoc = gl.getUniformLocation(program, "u_use_gyro");
 
     // Full-screen quad geometry
     const quadBuffer = gl.createBuffer();
@@ -563,7 +600,101 @@ const CyberBackground = () => {
     let isRunning = true;
     let animId;
 
+    // Mobile Device & Gyroscope Detection
+    const checkIsMobile = () => {
+      return (
+        /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (("ontouchstart" in window || navigator.maxTouchPoints > 0) && window.innerWidth < 800)
+      );
+    };
+
+    let targetTiltX = 0;
+    let targetTiltY = 0;
+    let currentTiltX = 0;
+    let currentTiltY = 0;
+    let baselineBeta = 45;
+    let hasCalibratedBaseline = false;
+    let hasReceivedOrientation = false;
+
+    // Con quay hồi chuyển (Gyroscope) theo hướng nghiêng vật lý của điện thoại
+    const onDeviceOrientation = (e) => {
+      if (e.gamma == null || e.beta == null) return;
+      hasReceivedOrientation = true;
+
+      // Căn chỉnh góc cầm tự nhiên lần đầu (thông thường từ 15 đến 80 độ)
+      if (!hasCalibratedBaseline) {
+        if (e.beta >= 15 && e.beta <= 80) {
+          baselineBeta = e.beta;
+        }
+        hasCalibratedBaseline = true;
+      } else {
+        // Trôi bù trừ dần nếu người dùng đổi tư thế cầm máy
+        baselineBeta += (e.beta - baselineBeta) * 0.005;
+      }
+
+      let rawX = e.gamma; // Độ nghiêng trái/phải (-90 đến +90)
+      let rawY = e.beta - baselineBeta; // Độ nghiêng trước/sau so với góc cầm chuẩn
+
+      // Xử lý góc xoay màn hình (Portrait vs Landscape)
+      const screenAngle =
+        window.screen?.orientation?.angle ??
+        (typeof window.orientation === "number" ? window.orientation : 0);
+      let x = rawX;
+      let y = rawY;
+
+      if (screenAngle === 90) {
+        x = -rawY;
+        y = rawX;
+      } else if (screenAngle === -90 || screenAngle === 270) {
+        x = rawY;
+        y = -rawX;
+      } else if (screenAngle === 180) {
+        x = -rawX;
+        y = -rawY;
+      }
+
+      // Chuẩn hóa góc nghiêng (khoảng ±25 độ là đạt độ lan tỏa tối đa)
+      const normX = Math.max(-1.0, Math.min(1.0, x / 25.0));
+      const normY = Math.max(-1.0, Math.min(1.0, y / 25.0));
+
+      targetTiltX = normX;
+      // Trong không gian UV WebGL: +Y là hướng lên trên (top), -Y là hướng xuống dưới (bottom).
+      // Khi nghiêng đầu điện thoại chúi xuống (rawY < 0) -> targetTiltY > 0 -> tán sắc lan lên trên.
+      // Khi ngửa điện thoại về phía người (rawY > 0) -> targetTiltY < 0 -> tán sắc lan xuống dưới.
+      targetTiltY = -normY;
+    };
+
+    // Hỗ trợ xin quyền con quay trên iOS Safari 13+
+    const requestDeviceOrientation = () => {
+      if (
+        typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function"
+      ) {
+        DeviceOrientationEvent.requestPermission()
+          .then((state) => {
+            if (state === "granted") {
+              window.addEventListener("deviceorientation", onDeviceOrientation, true);
+            }
+          })
+          .catch((err) => {
+            console.warn("[CyberBackground] DeviceOrientation permission:", err);
+          });
+      }
+    };
+
+    if (
+      typeof DeviceOrientationEvent === "undefined" ||
+      typeof DeviceOrientationEvent.requestPermission !== "function"
+    ) {
+      window.addEventListener("deviceorientation", onDeviceOrientation, true);
+    } else {
+      window.addEventListener("touchstart", requestDeviceOrientation, { once: true });
+      window.addEventListener("click", requestDeviceOrientation, { once: true });
+    }
+
     const onMouseMove = (e) => {
+      if (checkIsMobile() && hasReceivedOrientation) return;
+
       const w = window.innerWidth;
       const h = window.innerHeight;
       targetMouse.x = e.clientX / w;
@@ -593,6 +724,9 @@ const CyberBackground = () => {
     window.addEventListener("mouseleave", onMouseLeave);
 
     const onTouchMove = (e) => {
+      // Trên điện thoại: Không tracking theo ngón tay, dùng cảm biến con quay
+      if (checkIsMobile()) return;
+
       if (e.touches && e.touches.length > 0) {
         const w = window.innerWidth;
         const h = window.innerHeight;
@@ -617,6 +751,7 @@ const CyberBackground = () => {
     window.addEventListener("touchmove", onTouchMove, { passive: true });
 
     const onTouchEnd = () => {
+      if (checkIsMobile()) return;
       targetStrength = 0.0;
       mousePixel.targetX = -9999;
       mousePixel.targetY = -9999;
@@ -626,12 +761,23 @@ const CyberBackground = () => {
     const animate = () => {
       if (!isRunning) return;
 
-      currentMouse.x += (targetMouse.x - currentMouse.x) * 0.22;
-      currentMouse.y += (targetMouse.y - currentMouse.y) * 0.22;
+      const isMobile = checkIsMobile();
+      const useGyro = isMobile || hasReceivedOrientation;
+
+      if (useGyro) {
+        // Nội suy mượt mà góc nghiêng từ cảm biến con quay
+        currentTiltX += (targetTiltX - currentTiltX) * 0.14;
+        currentTiltY += (targetTiltY - currentTiltY) * 0.14;
+        targetStrength = 0.85;
+      } else {
+        currentMouse.x += (targetMouse.x - currentMouse.x) * 0.22;
+        currentMouse.y += (targetMouse.y - currentMouse.y) * 0.22;
+      }
+
       currentStrength += (targetStrength - currentStrength) * 0.12;
 
-      // Mouse tracking for kinetic typography
-      if (mousePixel.targetX < 0) {
+      // Trên điện thoại: Giữ chữ ổn định ở tâm, không bị biến dạng theo ngón tay
+      if (isMobile || mousePixel.targetX < 0) {
         mousePixel.x = -9999;
         mousePixel.y = -9999;
       } else {
@@ -666,6 +812,8 @@ const CyberBackground = () => {
       gl.uniform2f(uResolutionLoc, canvas.width, canvas.height);
       gl.uniform1f(uIsDarkLoc, mode2026Ref.current === "dark" ? 1.0 : 0.0);
       gl.uniform1f(uTimeLoc, (performance.now() - startTime) * 0.001);
+      gl.uniform2f(uTiltLoc, currentTiltX, currentTiltY);
+      gl.uniform1f(uUseGyroLoc, useGyro && hasReceivedOrientation ? 1.0 : 0.0);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
       gl.enableVertexAttribArray(posAttrib);
@@ -687,6 +835,9 @@ const CyberBackground = () => {
       window.removeEventListener("mouseleave", onMouseLeave);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("deviceorientation", onDeviceOrientation, true);
+      window.removeEventListener("touchstart", requestDeviceOrientation);
+      window.removeEventListener("click", requestDeviceOrientation);
 
       gl.deleteProgram(program);
       gl.deleteShader(vs);

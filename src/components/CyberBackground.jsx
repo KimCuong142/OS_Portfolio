@@ -85,7 +85,7 @@ const CyberBackground = () => {
 
         if (u_use_gyro > 0.5) {
           // --- Mobile Gyroscope Mode ---
-          // Lan tỏa hiệu ứng tán sắc theo hướng nghiêng của điện thoại
+          // Lan tỏa hiệu ứng tán sắc theo hướng nghiêng của điện thoại (ôm sát viền chữ)
           float tiltLen = length(u_tilt);
           vec2 normDir = vec2(0.0);
           if (tiltLen > 0.001) {
@@ -93,9 +93,10 @@ const CyberBackground = () => {
           }
           uvDir = normDir / aspect;
 
+          // Thu hẹp biên độ lan tỏa: Giữ quầng tán sắc ôm sát chữ (~4px - 8px), không bị loang xa
           float tiltFactor = smoothstep(0.02, 0.75, tiltLen);
-          dispAmountR = (tiltFactor * 0.038 + 0.002) * u_strength * 2.86;
-          dispAmountB = (tiltFactor * 0.012) * u_strength * 2.106;
+          dispAmountR = (tiltFactor * 0.008 + 0.001) * u_strength;
+          dispAmountB = (tiltFactor * 0.0035) * u_strength;
         } else {
           // --- Desktop Mouse Tracking Mode ---
           vec2 diff = (vUv - u_mouse) * aspect;
